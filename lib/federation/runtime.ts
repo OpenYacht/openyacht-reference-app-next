@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { parseNodeIdentity, systemClock } from "@/federation";
 import { supabaseNodeStore } from "@/lib/node/store";
+import { supabaseFeedSource } from "@/lib/listings/feed-source";
 import { createFederationHandlers } from "./handlers";
 import { inboundFederation } from "./inbound";
 import { SOFTWARE } from "./software";
@@ -16,4 +17,5 @@ export const federation = createFederationHandlers({
   software: SOFTWARE,
   requestId: () => `req_${randomUUID().replaceAll("-", "")}`,
   inbound: inboundFederation,
+  listings: supabaseFeedSource,
 });

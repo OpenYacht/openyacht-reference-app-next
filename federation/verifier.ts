@@ -25,8 +25,12 @@ const ED25519_SIGNATURE_LENGTH = 64;
 
 export interface InboundRequest {
   method: string;
-  /** Path including the query string, as received. */
-  pathAndQuery: string;
+  /**
+   * Path including the query string, as received. If the framework re-encodes
+   * the query before the application sees it, pass every spelling the sender
+   * may have signed — see `pathAndQueryVariants` — with the reported one first.
+   */
+  pathAndQuery: string | string[];
   headers: { get(name: string): string | null };
   /** The raw body bytes as received — read before any JSON parsing. */
   body: Uint8Array;
@@ -107,8 +111,8 @@ export class Verifier {
     if (signature.length !== ED25519_SIGNATURE_LENGTH) {
       return reject("SIGNATURE_INVALID", "X-OpenYacht-Signature is not a base64 Ed25519 signature.");
     }
-    const signingString = buildSigningStringOrNull(request, this.options.ownDomain, timestamp);
-    if (signingString === null) return reject("SIGNATURE_INVALID", "The request cannot form a signing string.");
+    const signingStrings = buildSigningStrings(request, this.options.ownDomain, timestamp);
+    if (signingStrings.length === 0) return reject("SIGNATURE_INVALID", "The request cannot form a signing string.");
 
     // FP-13 — first contact from an unknown domain. Trust on first use: fetch
     // what the domain serves and verify the request against it. Only a request
@@ -124,7 +128,7 @@ export class Verifier {
       } catch {
         return reject("PARTNER_UNKNOWN", "The sender is unknown and its well-known document could not be fetched.");
       }
-      if (!signatureMatches(discovered.keys, keyId, signingString, signature)) {
+      if (!signatureMatches(discovered.keys, keyId, signingStrings, signature)) {
         return reject("SIGNATURE_INVALID", "First contact: the signature does not verify against the sender's published keys.");
       }
       const registered = await register(node, discovered);
@@ -136,7 +140,7 @@ export class Verifier {
     const partner = known;
 
     // Steps 3 and 4 — cached keys, selected by key ID.
-    let verified = signatureMatches(partner.keys, keyId, signingString, signature);
+    let verified = signatureMatches(partner.keys, keyId, signingStrings, signature);
 
     // Step 5 — on failure, one fresh well-known fetch and one retry (FP-10).
     // This is what makes key rotation coordination-free.
@@ -157,7 +161,7 @@ export class Verifier {
         return reject("SIGNATURE_INVALID", "The sender's node UUID changed; the partnership needs re-approval.");
       }
 
-      verified = signatureMatches(fresh.keys, keyId, signingString, signature);
+      verified = signatureMatches(fresh.keys, keyId, signingStrings, signature);
       if (!verified) return reject("SIGNATURE_INVALID", "Signature verification failed after key refresh.");
       await this.options.partners.updateCachedKeys(node, fresh.keys);
     }
@@ -178,22 +182,23 @@ function reject(code: ErrorCode, reason: string): VerificationResult {
   return { ok: false, code, reason };
 }
 
-function buildSigningStringOrNull(request: InboundRequest, host: string, timestamp: string): string | null {
-  try {
-    return buildSigningString({
-      method: request.method,
-      pathAndQuery: request.pathAndQuery,
-      host,
-      timestamp,
-      body: request.body,
-    });
-  } catch {
-    return null;
+/** One signing string per spelling of the request target; a spelling that cannot form one is dropped. */
+function buildSigningStrings(request: InboundRequest, host: string, timestamp: string): string[] {
+  const spellings = Array.isArray(request.pathAndQuery) ? request.pathAndQuery : [request.pathAndQuery];
+  const signingStrings: string[] = [];
+  for (const pathAndQuery of spellings) {
+    try {
+      signingStrings.push(buildSigningString({ method: request.method, pathAndQuery, host, timestamp, body: request.body }));
+    } catch {
+      // A spelling containing a line break cannot have been signed.
+    }
   }
+  return signingStrings;
 }
 
-function signatureMatches(keys: PublishedKey[], keyId: string, signingString: string, signature: Buffer): boolean {
+function signatureMatches(keys: PublishedKey[], keyId: string, signingStrings: string[], signature: Buffer): boolean {
   const key = keys.find((candidate) => candidate.keyId === keyId);
   if (key === undefined) return false;
-  return verify(null, Buffer.from(signingString, "utf8"), publicKeyFromRaw(key.publicKey), signature);
+  const publicKey = publicKeyFromRaw(key.publicKey);
+  return signingStrings.some((signingString) => verify(null, Buffer.from(signingString, "utf8"), publicKey, signature));
 }

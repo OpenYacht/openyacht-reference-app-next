@@ -85,11 +85,25 @@ describe("a stored listing becomes a schema-valid wire document", () => {
 
   it("API-12: the price is served as the string that was stored, never a number", () => {
     const document = serve(row({ price_amount: "1388000.50", price_currency: "USD" }), [
-      { amount: "1388000.50", currency: "USD", changed_at: "2026-09-18T20:40:00.999+00:00" },
+      { id: 1, amount: "1388000.50", currency: "USD", changed_at: "2026-09-18T20:40:00.999+00:00" },
     ]);
     expectValid(document);
     expect(document.listing.price).toMatchObject({ amount: "1388000.50", currency: "USD" });
     expect(document.listing.price_history).toEqual([{ amount: "1388000.50", currency: "USD", changed_at: "2026-09-18T20:40:00Z" }]);
+  });
+
+  it("LS-10: two price changes inside one second keep their order, though the wire timestamps tie", () => {
+    // Given oldest-first, as an unordered query may return them.
+    const history = [
+      { id: 7, amount: "1250000", currency: "EUR", changed_at: "2026-09-18T21:58:24.554695+00:00" },
+      { id: 8, amount: "1195000", currency: "EUR", changed_at: "2026-09-18T21:58:24.586721+00:00" },
+    ];
+    const document = serve(row({ price_amount: "1195000", price_currency: "EUR" }), history);
+    expectValid(document);
+    expect(document.listing.price_history).toEqual([
+      { amount: "1195000", currency: "EUR", changed_at: "2026-09-18T21:58:24Z" },
+      { amount: "1250000", currency: "EUR", changed_at: "2026-09-18T21:58:24Z" },
+    ]);
   });
 
   it("a charter row serves `price: null` and a complete charter block", () => {

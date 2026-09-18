@@ -98,4 +98,4 @@ pnpm vendor:protocol   # re-vendor ./protocol and regenerate the types
   against a server the developer has running.
 - Federation routes answer only on `OPENYACHT_DOMAIN`. To reach them on a local server:
   `curl --connect-to <domain>:80:127.0.0.1:3000 http://<domain>/.well-known/openyacht`.
-- Never commit without being asked.
+- Commit coherent units of work as you go, each passing the gate. Never push: publishing is the maintainer's step.

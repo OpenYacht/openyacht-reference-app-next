@@ -22,6 +22,11 @@ afterAll(() => client.end());
 
 beforeEach(async () => {
   await client.query("begin");
+  // Only this test's inventory exists inside the transaction, whatever the
+  // database holds. Deleting a listing takes its price history, shares and
+  // visibility events with it.
+  await client.query("delete from public.listings");
+  await client.query("delete from public.vessels");
   await client.query(
     "insert into auth.users (id, email) values ($1, 'e@node.example'), ($2, 'b@node.example'), ($3, 'o@node.example'), ($4, 'v@node.example'), ($5, 'n@node.example')",
     [EDITOR, BROKER, OTHER_BROKER, VIEWER, NO_ROLE],

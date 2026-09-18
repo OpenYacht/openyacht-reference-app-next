@@ -5,6 +5,7 @@ import {
   decodePublicKey,
   generateKeypair,
   InMemoryReplayGuard,
+  pathAndQueryVariants,
   Signer,
   Verifier,
   type DiscoveredNode,
@@ -102,6 +103,33 @@ describe("FP-7 the verifier accepts the published vectors", () => {
   it("accepts a timestamp exactly 300 seconds from server time", async () => {
     const { verifier } = harness({ now: "2026-08-21T09:05:00Z" });
     expect(await verifier.verify(request(VECTOR_1))).toMatchObject({ ok: true });
+  });
+});
+
+describe("FP-7 a query string the framework has re-encoded", () => {
+  // What a framework that normalises URLs reports for vector 1's request target.
+  const reported = VECTOR_1.pathAndQuery.replaceAll(":", "%3A");
+
+  it("vector 1 still verifies when the colons it was signed with arrive as %3A", async () => {
+    const { verifier } = harness({ now: VECTOR_1.timestamp });
+    expect(await verifier.verify({ ...request(VECTOR_1), pathAndQuery: reported })).toMatchObject({ ok: false });
+    expect(await verifier.verify({ ...request(VECTOR_1), pathAndQuery: pathAndQueryVariants(reported) })).toMatchObject({ ok: true });
+  });
+
+  it("offers the reported spelling first, and the literal one only when it differs", () => {
+    expect(pathAndQueryVariants(reported)).toEqual([reported, VECTOR_1.pathAndQuery]);
+    expect(pathAndQueryVariants("/openyacht/v1/listings?page_size=50")).toEqual(["/openyacht/v1/listings?page_size=50"]);
+    expect(pathAndQueryVariants("/openyacht/v1/partners/request")).toEqual(["/openyacht/v1/partners/request"]);
+  });
+
+  it("never touches the characters that give a query its structure", () => {
+    expect(pathAndQueryVariants("/l?a=1%262%3D3%2B4%25&b=%20x%23")).toEqual(["/l?a=1%262%3D3%2B4%25&b=%20x%23"]);
+  });
+
+  it("changes nothing about what is accepted: a different value is still a different request", async () => {
+    const { verifier } = harness({ now: VECTOR_1.timestamp });
+    const other = pathAndQueryVariants(reported.replace("page_size=50", "page_size=51"));
+    expect(await verifier.verify({ ...request(VECTOR_1), pathAndQuery: other })).toMatchObject({ ok: false, code: "SIGNATURE_INVALID" });
   });
 });
 

@@ -10,6 +10,7 @@ export * from "./feed";
 export * from "./https-client";
 export * from "./identity";
 export * from "./keys";
+export * from "./listings-endpoint";
 export * from "./outbound-guard";
 export * from "./own-listings";
 export * from "./partners";

@@ -53,6 +53,7 @@ export interface ListingRow {
 }
 
 export interface PriceHistoryRow {
+  id: number;
   amount: string;
   currency: string;
   changed_at: string | Date;
@@ -90,7 +91,12 @@ export function toOwnListing(row: ListingRow, vessel: VesselRow, priceHistory: P
       row.listing_type === "charter"
         ? null
         : { amount: row.price_amount, currency: row.price_currency, on_application: row.price_on_application, starting_price: row.price_starting },
-    priceHistory: priceHistory.map((entry) => ({ amount: entry.amount, currency: entry.currency, changed_at: wireTimestamp(entry.changed_at) })),
+    // Newest first, decided here at the database's precision. Wire timestamps
+    // are whole seconds, so two changes inside one second tie once truncated —
+    // and the serialiser, sorting ties stably, keeps the order given to it.
+    priceHistory: [...priceHistory]
+      .sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime() || b.id - a.id)
+      .map((entry) => ({ amount: entry.amount, currency: entry.currency, changed_at: wireTimestamp(entry.changed_at) })),
     location:
       row.location_display === null
         ? null

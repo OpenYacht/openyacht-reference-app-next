@@ -4,17 +4,23 @@
 // schemas; app/**/route.ts files only bind them to the real store.
 import {
   buildCapabilities,
+  buildCollection,
   buildErrorEnvelope,
   buildHealth,
   buildWellKnownDocument,
   ERROR_STATUS,
+  FeedQueryError,
   HEADER_NODE,
   IdentityConfigError,
   isIdentityHost,
+  parseFeedQuery,
+  pathAndQueryVariants,
+  UUID_PATTERN,
   WELL_KNOWN_PATH,
   type Clock,
   type ErrorCode,
   type InboundRequest,
+  type ListingFeedSource,
   type NodeIdentity,
   type PartnerRecord,
   type VerificationResult,
@@ -48,12 +54,16 @@ export interface FederationDeps {
   requestId(): string;
   /** Absent in tests that exercise only the unsigned documents. */
   inbound?: InboundFederation;
+  /** This node's own listings, as one partner may see them. */
+  listings?: ListingFeedSource;
 }
 
-// No optional feature is advertised yet: a flag is switched on by the change
-// that makes the feature work, never ahead of it.
-const FEATURES = { subscriptions: false, charter_listings: false, media_hashes: false };
+// A flag is switched on by the change that makes the feature work, never ahead
+// of it. `charter_listings` says the node implements the charter block of the
+// wire schema — not that it holds any charter inventory.
+const FEATURES = { subscriptions: false, charter_listings: true, media_hashes: false };
 const LIMITS = { page_size_max: 100, rate_per_hour: 500 };
+const PAGE_SIZE_DEFAULT = 50;
 
 // A discovery document cached by an intermediary would defeat the fresh
 // refetch that makes key rotation coordination-free (FP-10). Partners cache
@@ -159,7 +169,15 @@ export function createFederationHandlers(deps: FederationDeps) {
       if (body.length > MAX_BODY_BYTES)
         return finish(errorResponse("VALIDATION_ERROR", "The request body is too large.", requestId), "VALIDATION_ERROR", null);
 
-      const result = await inbound.verify({ method: request.method, pathAndQuery: url.pathname + url.search, headers: request.headers, body });
+      // Next.js hands a route handler a re-encoded query string (`:` arrives as
+      // `%3A`), so the sender may have signed a spelling that is no longer
+      // visible here. The verifier is given both.
+      const result = await inbound.verify({
+        method: request.method,
+        pathAndQuery: pathAndQueryVariants(url.pathname + url.search),
+        headers: request.headers,
+        body,
+      });
       if (!result.ok) {
         const details = result.code === "SIGNATURE_INVALID" || result.code === "PARTNER_UNKNOWN" ? { well_known: WELL_KNOWN_PATH } : undefined;
         console.warn(`[openyacht] rejected ${request.method} ${url.pathname} from ${senderDomain ?? "?"}: ${result.code} — ${result.reason}`);
@@ -232,6 +250,39 @@ export function createFederationHandlers(deps: FederationDeps) {
           contactEmail: text(fields.contact_email, MAX_EMAIL_LENGTH),
         });
         return json({ status: partner.trustLevel === "verified" ? "accepted" : "pending", trust_level: partner.trustLevel }, 202);
+      }),
+
+    /**
+     * GET /openyacht/v1/listings — this node's own listings, as the requesting
+     * partner may see them (API-2, API-3, API-5). Own listings only: copies of
+     * other nodes' listings are never served onward (ID-6).
+     */
+    listings: (request: Request) =>
+      signed(request, { allowProvisional: false }, async ({ partner }) => {
+        if (deps.listings === undefined) return errorResponse("NOT_FOUND", "No such federation endpoint.");
+        let query;
+        try {
+          query = parseFeedQuery(new URL(request.url).searchParams, { pageSizeDefault: PAGE_SIZE_DEFAULT, pageSizeMax: LIMITS.page_size_max });
+        } catch (error) {
+          if (!(error instanceof FeedQueryError)) throw error;
+          return errorResponse("VALIDATION_ERROR", error.message);
+        }
+        const { items, next } = await deps.listings.page(partner.domain, query);
+        return json(buildCollection(items, next, deps.clock.now()));
+      }),
+
+    /**
+     * GET /openyacht/v1/listings/{uuid} — the dereference target of a canonical
+     * URI. One answer, NOT_FOUND, covers a listing that does not exist, one that
+     * is a draft, and one this partner may not see: the wording is identical, so
+     * a partner learns nothing by trying UUIDs.
+     */
+    listing: (request: Request, uuid: string) =>
+      signed(request, { allowProvisional: false }, async ({ partner }) => {
+        const found = deps.listings !== undefined && UUID_PATTERN.test(uuid) ? await deps.listings.one(partner.domain, uuid) : null;
+        if (found === null) return errorResponse("NOT_FOUND", "No such listing.");
+        if (found === "gone") return errorResponse("GONE", "This listing ended more than twelve months ago.");
+        return json(found);
       }),
 
     /**

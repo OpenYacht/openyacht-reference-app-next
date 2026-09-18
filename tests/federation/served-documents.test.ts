@@ -122,12 +122,12 @@ describe("FP-1 / FP-5 GET /.well-known/openyacht", () => {
 });
 
 describe("API-6 unsigned endpoints", () => {
-  it("GET /openyacht/v1/capabilities is schema-valid and advertises no optional feature", async () => {
+  it("GET /openyacht/v1/capabilities is schema-valid and advertises only what works", async () => {
     const response = await handlers().capabilities(get("/openyacht/v1/capabilities"));
     expect(response.status).toBe(200);
     const document = await response.json();
     expectValid(`${SCHEMA_BASE}capabilities.schema.json`, document);
-    expect(document.features).toEqual({ subscriptions: false, charter_listings: false, media_hashes: false });
+    expect(document.features).toEqual({ subscriptions: false, charter_listings: true, media_hashes: false });
   });
 
   it("GET /openyacht/v1/health matches the OpenAPI Health component", async () => {
@@ -149,10 +149,24 @@ describe("API-9 unknown federation paths", () => {
   });
 });
 
+/** Every route the node serves, so that the gate in front of them is checked for each — new ones included. */
+function everyRoute(served: ReturnType<typeof handlers>): ((request: Request) => Promise<Response>)[] {
+  return [
+    served.wellKnown,
+    served.capabilities,
+    served.health,
+    served.partnersRequest,
+    served.listings,
+    (request) => served.listing(request, "018f6d2e-9f0a-7cc3-a1b2-3c4d5e6f7a8b"),
+    (request) => served.methodNotAllowed(request, ["GET"]),
+    served.notFound,
+  ];
+}
+
 describe("single-host guard", () => {
   it.each(["localhost:3000", "admin.brokerage.example", "brokerage.example"])("answers a bare 404 on %s", async (host) => {
-    for (const handler of Object.values(handlers())) {
-      const response = await handler(get("/.well-known/openyacht", host), ["GET"]);
+    for (const route of everyRoute(handlers())) {
+      const response = await route(get("/.well-known/openyacht", host));
       expect(response.status).toBe(404);
       expect(await response.text()).toBe("");
     }
@@ -166,8 +180,8 @@ describe("single-host guard", () => {
 describe("a node that is not ready publishes nothing", () => {
   it("answers 503 on every federation route until setup completes", async () => {
     const state: NodeState = { nodeUuid: null, identityDomain: null, setupCompleted: false };
-    for (const handler of Object.values(handlers({ state }))) {
-      expect((await handler(get("/.well-known/openyacht"), ["GET"])).status).toBe(503);
+    for (const route of everyRoute(handlers({ state }))) {
+      expect((await route(get("/.well-known/openyacht"))).status).toBe(503);
     }
   });
 
