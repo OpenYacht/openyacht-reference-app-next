@@ -30,9 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# local working notes — never committed
+# local working notes and agent tooling — never committed
 CLAUDE.local.md
 /notes/
+/.claude/
+/.agents/
+/skills-lock.json
 
 # env files — only the example is committed
 .env*

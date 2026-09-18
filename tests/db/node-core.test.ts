@@ -26,10 +26,18 @@ afterAll(() => client.end());
 
 beforeEach(async () => {
   await client.query("begin");
-  // A clean slate inside the transaction, whatever state the database is in.
+  // A clean slate inside the transaction, whatever state the database is in —
+  // including a development project whose setup has been completed. Its real
+  // administrator is the last super_admin, which the trigger under test would
+  // (rightly) refuse to delete, so triggers are suspended for the clean-up
+  // statements alone. `set local` and the deletes roll back with the rest.
+  await client.query("set local session_replication_role = replica");
+  await client.query("delete from public.listing_copies");
+  await client.query("delete from public.federation_partners");
   await client.query("delete from public.user_roles");
   await client.query("delete from public.federation_keys");
   await client.query("update public.node_settings set node_uuid = null, identity_domain = null, identity_mode = null, setup_completed_at = null");
+  await client.query("set local session_replication_role = origin");
   await client.query("insert into auth.users (id, email) values ($1, 'first@node.example'), ($2, 'second@node.example')", [FIRST_USER, SECOND_USER]);
 });
 afterEach(() => client.query("rollback"));

@@ -5,7 +5,8 @@ import { isSetupComplete } from "@/lib/node/setup-state";
 
 // Runs in front of the admin UI only. Federation routes are excluded by the
 // matcher: they authenticate by request signature, guard their own host, and
-// answer 503 by themselves until setup completes.
+// answer 503 by themselves until setup completes. So are the internal routes
+// a scheduler calls, which authenticate with INTERNAL_API_SECRET.
 //
 // This is routing, not authorisation. Every page and Server Action checks the
 // caller again, because a matcher change can silently remove proxy coverage.
@@ -42,5 +43,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!\\.well-known/|openyacht/|_next/static|_next/image|favicon\\.ico).*)"],
+  matcher: ["/((?!\\.well-known/|openyacht/|api/internal/|_next/static|_next/image|brand/|icon\\.svg|apple-icon\\.png|favicon\\.ico).*)"],
 };

@@ -19,6 +19,7 @@
     "test": "vitest run",
     "test:db": "vitest run --config vitest.db.config.mts",
     "migrate": "node scripts/migrate.mjs",
+    "sync": "node scripts/sync.mjs",
     "vendor:protocol": "node scripts/vendor-protocol.mjs && node scripts/generate-types.mjs",
     "generate:types": "node scripts/generate-types.mjs"
   },
@@ -31,6 +32,7 @@
     "pg": "8.23.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "sanitize-html": "2.17.7",
     "server-only": "0.0.1"
   },
   "devDependencies": {
@@ -39,6 +41,7 @@
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@types/sanitize-html": "2.16.1",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
     "eslint": "9.39.5",
