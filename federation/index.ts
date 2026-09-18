@@ -11,6 +11,7 @@ export * from "./https-client";
 export * from "./identity";
 export * from "./keys";
 export * from "./outbound-guard";
+export * from "./own-listings";
 export * from "./partners";
 export * from "./ports";
 export * from "./replay-guard";
