@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, typecheck, unit lane, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # The launcher only; package.json's packageManager field picks the version.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generated types are current
+        run: pnpm generate:types && git diff --exit-code -- federation/generated
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      # No database URL here, so the build's migration step skips itself.
+      - run: pnpm build
+
+  database:
+    name: Database lane (clean Supabase stack)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Runners ship with Docker, so CI gets a clean, real Supabase database —
+      # Auth, Vault and all. Docker is a CI detail, never a developer
+      # prerequisite. Only the database is needed for this lane.
+      - name: Start the Supabase database
+        run: pnpm exec supabase db start
+      # The same runner the install path uses, against an empty database:
+      # this is the fresh-install check for the migrations.
+      - name: Apply migrations with the project's own runner
+        run: pnpm migrate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      - run: pnpm test:db
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres

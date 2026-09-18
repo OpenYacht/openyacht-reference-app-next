@@ -1,0 +1,7 @@
+# One line ending in git, whatever platform a file was written on.
+* text=auto eol=lf
+
+*.ico binary
+*.png binary
+*.jpg binary
+*.webp binary

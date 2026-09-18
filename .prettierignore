@@ -1,0 +1,7 @@
+.next
+node_modules
+pnpm-lock.yaml
+# Vendored verbatim from the protocol repository; generated from it.
+protocol
+federation/generated
+supabase/.temp

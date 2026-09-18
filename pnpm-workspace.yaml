@@ -1,0 +1,8 @@
+# pnpm 10 blocks dependency build scripts unless they are allow-listed.
+# This list is committed on purpose: approving builds interactively works on
+# one machine and fails on a cold clone.
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - supabase
+  - unrs-resolver
