@@ -24,9 +24,12 @@ The normative protocol lives in the public [`OpenYacht/protocol`](https://github
 outbound HTTP and time reach it through the interfaces in `federation/ports.ts`. The directory must lift unchanged into Express, Fastify, Hono
 or Nest; Next and Supabase are the demonstration harness around it. ESLint enforces this (`no-restricted-imports`). Do not trade it away.
 
-- `federation/` — the core: signing string, signer, verifier, keys, well-known, documents, identity.
+- `federation/` — the core: signing, verification, keys, discovery, the outbound guard and HTTPS client, partner operations, the sync engine,
+  copies, staleness.
 - `lib/federation/handlers.ts` — `Request → Response` handlers with injected dependencies (unit-testable without Next or a database).
 - `app/.well-known/`, `app/openyacht/v1/` — three-line route files binding handlers to the real store. Node runtime, never Edge.
+- `lib/federation/repositories.ts` implements the core's repositories over Supabase and takes the client to use: an administrator's action passes
+  the signed-in user's client (RLS decides), the sync engine passes the service-role client. `lib/federation/consumer.ts` wires it together.
 - `lib/supabase/service.ts` (service role, bypasses RLS: federation + setup only) and `lib/supabase/server.ts` (the signed-in user, under RLS)
   are two trust domains. A federation partner is authenticated by signature, never by a Supabase JWT. Do not mix them.
 
@@ -40,6 +43,10 @@ or Nest; Next and Supabase are the demonstration harness around it. ESLint enfor
   `Checkbox` the control goes _inside_ the content row beside the label — `<RadioContent><RadioControl><RadioIndicator /></RadioControl><Label/></RadioContent>` —
   with `Description` as a sibling below. Each component's anatomy is documented at the top of its stylesheet in `@heroui/styles/dist/components/`.
   A build proves HeroUI compiles, not that a form is laid out correctly: look at new UI in a browser.
+- **Outbound requests to partner-supplied hosts go through `GuardedHttpsClient` only** — never `fetch`. The guard runs inside the socket's DNS
+  lookup, so the address checked is the address dialled; redirects are not followed.
+- **Copies are never edited and never relayed.** `listing_copies` has no write policy for signed-in users; only the sync engine writes it. The
+  sanitiser runs on receipt and again at render.
 - **No development escape hatch in security checks** — the outbound guard, the host guard and TLS verification have no dev-mode bypass.
 - **Migrations state their own privileges.** Hand-written SQL in `supabase/migrations/`, named `<14-digit timestamp>_<snake_case>.sql`. Every
   table enables RLS and is followed by explicit `revoke`/`grant` statements — never rely on a project's "expose new tables" setting.

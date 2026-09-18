@@ -9,9 +9,10 @@ pointed at it — how each requirement of the specification looks in ordinary Ty
 [conformance checklist](https://github.com/OpenYacht/protocol/blob/main/spec/conformance-checklist.md): `describe("FP-7 …")` is requirement
 FP-7.
 
-> **Status: early.** The federation core is in place — key generation, encrypted key storage, request signing and verification, the discovery
-> document, `capabilities` and `health` — and reproduces the protocol's signing test vectors byte-for-byte. Partnering, sync and listings are
-> not built yet, so this node cannot federate with anyone today.
+> **Status: in progress.** Built so far: the federation core (keys, signing, verification, discovery), first-run setup, and the **consumer
+> role** — adding partners, the signed partnership request, cold sync and `updated_since` polling, tombstones, copies with provenance, and
+> a per-partner acceptance policy — and receiving signed partnership requests from nodes that contact this one first. The **authority role** — serving this node's own listings to partners — is not built yet, so
+> `/openyacht/v1/listings` answers `NOT_FOUND`.
 
 ## The part you can lift: `federation/`
 
@@ -20,17 +21,24 @@ client, and no third-party cryptography (Ed25519 is `node:crypto`). Storage, out
 in [`federation/ports.ts`](federation/ports.ts). Copy the directory into an Express, Fastify, Hono or Nest application and implement those
 interfaces; Next.js and Supabase are only the harness demonstrated around it.
 
-| File                | What it implements                                                                                                     |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `signing-string.ts` | The five-field signing string (FP-7)                                                                                   |
-| `keys.ts`           | Ed25519 keypairs, key-ID derivation, strict public-key decoding (FP-3)                                                 |
-| `signer.ts`         | The four `X-OpenYacht-*` headers for an outbound request (FP-6)                                                        |
-| `verifier.ts`       | The spec's six-step verification procedure: window, blocked, keys, refetch-and-retry, UUID change, pins (FP-8 – FP-12) |
-| `well-known.ts`     | Building this node's discovery document; strictly parsing a partner's (FP-1, FP-5)                                     |
-| `documents.ts`      | `capabilities` and `health` (API-6)                                                                                    |
-| `errors.ts`         | The error envelope and its HTTP status mapping (API-9)                                                                 |
-| `identity.ts`       | Identity configuration that fails loudly, and the single-host guard                                                    |
-| `generated/`        | Wire types generated from the protocol's JSON Schemas — never written by hand                                          |
+| File                                   | What it implements                                                                                                     |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `signing-string.ts`                    | The five-field signing string (FP-7)                                                                                   |
+| `keys.ts`                              | Ed25519 keypairs, key-ID derivation, strict public-key decoding (FP-3)                                                 |
+| `signer.ts`                            | The four `X-OpenYacht-*` headers for an outbound request (FP-6)                                                        |
+| `verifier.ts`                          | The spec's six-step verification procedure: window, blocked, keys, refetch-and-retry, UUID change, pins (FP-8 – FP-12) |
+| `well-known.ts`                        | Building this node's discovery document; strictly parsing a partner's (FP-1, FP-5)                                     |
+| `well-known-client.ts`                 | Fetching a partner's discovery document, rate-limited (FP-2, FP-10)                                                    |
+| `outbound-guard.ts`, `https-client.ts` | Every outbound request: public hosts only, checked at connection time; verified TLS; no redirects (FP-2, FP-14)        |
+| `signed-client.ts`                     | Signed requests to a partner                                                                                           |
+| `partners.ts`                          | Adding a partner, key refresh and pin confirmation, the partnership request, removal (FP-11 – FP-13, FP-16)            |
+| `sync.ts`, `feed.ts`                   | Cold sync and `updated_since` polling, tombstones, pagination (API-2, API-3, API-7, API-8, ID-7)                       |
+| `copies.ts`                            | Sanitising on receipt, the acceptance policy, vessel-identity conflicts, registry slugs (ID-3 – ID-10, LS-5, LS-12)    |
+| `staleness.ts`                         | The 7-day stale flag, the 30-day hide, and polling backoff (FP-15)                                                     |
+| `documents.ts`                         | `capabilities` and `health` (API-6)                                                                                    |
+| `errors.ts`                            | The error envelope and its HTTP status mapping (API-9)                                                                 |
+| `identity.ts`                          | Identity configuration that fails loudly, and the single-host guard                                                    |
+| `generated/`                           | Wire types generated from the protocol's JSON Schemas — never written by hand                                          |
 
 The protocol's schemas, registries, OpenAPI document and test vectors are vendored under [`protocol/`](protocol/) (`pnpm vendor:protocol`) and
 read from disk. Nothing is fetched from a third party when validating or serving a listing.
@@ -112,10 +120,35 @@ tunnel to your local server is the usual answer.
 - **`/.well-known/openyacht` returns 404 on localhost.** That is the single-host guard; see above.
 - **Federation endpoints return 503.** Setup has not been completed, or the database cannot be reached — the server log says which.
 
+## Partners and synchronisation
+
+A super admin adds a partner under **Partners** with nothing but its identity domain. The node fetches the partner's discovery document over
+verified TLS, trusts it on first use, and sends a signed partnership request carrying your message — so the other administrator learns who is
+asking before approving. Until they approve, their node answers `PARTNER_PROVISIONAL`; that is not an error, and polling simply continues.
+
+**Synchronising is not publishing.** Every listing a partner shares is stored as a copy, with its provenance, and kept current — including
+withdrawals, which drop the stored data. Whether a copy is _displayed_ is a per-partner policy: hold everything, accept what arrives complete,
+or accept everything. Three things no policy overrides: a listing whose usage terms forbid display, a vessel that two authorities both claim
+(both copies are kept and flagged for a person), and a partner that has been unreachable for 30 days.
+
+Next.js has no scheduler, so sync runs when something calls `POST /api/internal/sync` with `INTERNAL_API_SECRET`:
+
+```bash
+pnpm sync              # one pass over the partners that are due — the server must be running
+pnpm sync -- --force   # ignore the failure backoff
+```
+
+In production, point any timer at that route — `pg_cron` with `pg_net` inside the Supabase project, a host's cron feature, or crontab with
+`curl`. Hourly is ample; the protocol's obligation is that withdrawals are applied within 24 hours.
+
+Every outbound request goes through a guard that refuses private, loopback and unresolvable hosts, with no development bypass. A partner must
+therefore be a real, publicly reachable node — and so must this one, since the partner verifies your requests by fetching _your_ discovery
+document.
+
 ## Tests
 
 ```bash
-pnpm test      # unit lane: the federation core and route handlers. No database, no network.
+pnpm test      # unit lane: the federation core, route handlers and the sanitiser. No database, no network.
 pnpm test:db   # database lane: RLS policies, the setup function, the Vault round-trip.
 ```
 

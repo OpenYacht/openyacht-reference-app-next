@@ -1,6 +1,5 @@
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Chip } from "@heroui/react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Chip } from "@heroui/react";
 import { IdentityConfigError, parseNodeIdentity, WELL_KNOWN_PATH } from "@/federation";
-import { signOutAction } from "@/app/login/actions";
 import { requireSession } from "@/lib/auth/session";
 import { userClient } from "@/lib/supabase/server";
 
@@ -27,20 +26,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">OpenYacht node</h1>
-          <p className="text-muted text-sm">
-            {session.email} · {session.role ?? "no role assigned"}
-          </p>
-        </div>
-        <form action={signOutAction}>
-          <Button type="submit" variant="secondary">
-            Sign out
-          </Button>
-        </form>
-      </header>
+    <main className="flex flex-col gap-6">
+      <h1 className="text-2xl font-semibold">This node</h1>
 
       {session.role === null ? (
         <Card>

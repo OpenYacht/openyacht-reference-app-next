@@ -12,6 +12,8 @@ export default async function SetupPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-12">
+      {/* eslint-disable-next-line @next/next/no-img-element -- a static SVG; the image optimiser adds nothing */}
+      <img src="/brand/openyacht-lockup.svg" alt="OpenYacht" width={161} height={40} className="h-10 w-auto self-start" />
       <header>
         <h1 className="text-2xl font-semibold">Set up this OpenYacht node</h1>
         <p className="text-muted mt-2">One-time setup: the first administrator, the node&apos;s UUID, and its signing key.</p>

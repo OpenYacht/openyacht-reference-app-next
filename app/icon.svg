@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Favicon cut of the OpenYacht mark (Oscar over Yankee on a halyard):
+       bolder geometry and three Yankee stripes, tuned for 16px tabs.
+       Master lives at /brand/openyacht-mark.svg. -->
+  <defs>
+    <clipPath id="y"><rect x="10" y="17.5" width="19" height="13"/></clipPath>
+  </defs>
+  <rect width="32" height="32" fill="#f5f3ee"/>
+  <rect x="4" y="0" width="2.5" height="32" fill="#14181f"/>
+  <polygon points="10,1.5 29,1.5 10,14.5" fill="#c30b2d"/>
+  <polygon points="29,1.5 29,14.5 10,14.5" fill="#fecf16"/>
+  <g clip-path="url(#y)">
+    <rect x="10" y="17.5" width="19" height="13" fill="#fecf16"/>
+    <g stroke="#c30b2d" stroke-width="3.7">
+      <line x1="0" y1="-6" x2="40" y2="34"/>
+      <line x1="0" y1="4.5" x2="40" y2="44.5"/>
+      <line x1="0" y1="15" x2="40" y2="55"/>
+    </g>
+  </g>
+</svg>

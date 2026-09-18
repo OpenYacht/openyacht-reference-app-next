@@ -1,2 +1,8 @@
 @import "tailwindcss";
 @import "@heroui/styles";
+
+/* OpenYacht signal blue as the accent; everything else is HeroUI's default theme. */
+:root {
+  --accent: oklch(33% 0.135 264);
+  --accent-foreground: oklch(95% 0.012 95);
+}
