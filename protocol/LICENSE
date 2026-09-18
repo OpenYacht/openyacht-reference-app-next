@@ -1,0 +1,41 @@
+# OpenYacht Protocol — Licensing
+
+This repository contains two kinds of material under two licenses. Full
+license texts are in `LICENSES/`.
+
+## Specification text — CC-BY-4.0
+
+The prose specification and documentation are licensed under the
+**Creative Commons Attribution 4.0 International** license
+(`LICENSES/CC-BY-4.0.txt`):
+
+- `spec/` (all documents)
+- `consultation/`
+- `README.md`, `CONTRIBUTING.md`, and all other Markdown documentation
+
+## Machine-readable artifacts — MIT
+
+The artifacts implementers embed and vendor inside their own systems —
+including proprietary in-house ones — are licensed under the **MIT** license
+(`LICENSES/MIT.txt`):
+
+- `schemas/` (JSON Schemas)
+- `openapi/` (OpenAPI document)
+- `examples/` (example payloads, valid and invalid)
+- `registry/` (`builders.json` and future vocabulary files)
+- `scripts/` and CI configuration
+
+## Why the split
+
+The protocol is public and free to implement. Schemas, examples, and the
+registry only work if every implementation — open or proprietary — can copy
+them verbatim into its own codebase; MIT makes that unambiguous. The prose
+spec is a document, not software; CC-BY-4.0 keeps it freely reusable with
+attribution.
+
+Reference *implementations* of OpenYacht (node software, connectors) live in
+other repositories under their own licenses; nothing in this repository
+constrains or is constrained by them.
+
+*Note: this licensing split is the maintainers' working decision and is
+flagged for professional legal review before v1.0.*

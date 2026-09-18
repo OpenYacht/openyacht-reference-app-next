@@ -1,0 +1,7 @@
+{
+	"registry": "openyacht-nodes",
+	"version": "2026.08.0",
+	"canonical_url": "https://openyacht.org/registry/nodes.json",
+	"notes": "The node directory: an opt-in, advisory seed list of OpenYacht nodes that have asked to be listed. A phonebook, not a membership list — presence conveys existence only: no endorsement, no identity verification, no trust. Everything verifiable about a node (keys, endpoints, capabilities) is discovered live from its own domain via /.well-known/openyacht; on any conflict the node's own documents win. A node never needs to be listed here to federate, and consumers must not treat listing as a prerequisite for, or a signal about, partnership. Each entry: domain (the node's identity domain, the primary key), name, website, country (ISO 3166-1 alpha-2, principal office), listed_at. Listing and delisting are by signed request from the node operator — see the registry README for the walkthrough. Versioned like the other registries: date-based, vendored, never fetched at request time.",
+	"nodes": []
+}

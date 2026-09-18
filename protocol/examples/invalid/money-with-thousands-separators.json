@@ -1,0 +1,235 @@
+{
+  "id": "https://authority.example/openyacht/v1/listings/018f6d2e-9f0a-7cc3-a1b2-3c4d5e6f7a8b",
+  "type": "sale",
+  "status": "active",
+  "updated_at": "2026-08-19T16:05:00Z",
+  "listed_at": "2026-02-04T15:06:12Z",
+  "condition": "used",
+  "agreement": {
+    "type": "central",
+    "co_brokerage": true
+  },
+  "vessel": {
+    "hin": "OEOM5021G516",
+    "imo": null,
+    "mmsi": null,
+    "official_number": "1261706",
+    "builder": {
+      "name": "Maritimo",
+      "slug": "maritimo"
+    },
+    "model": {
+      "name": "M50",
+      "slug": null
+    },
+    "year_built": 2016,
+    "refit_year": null,
+    "loa_m": 15.24,
+    "previous_names": []
+  },
+  "listing": {
+    "name": "BLUE SKY",
+    "summary": "BLUE SKY, the 50’ Maritimo, offers an unparalleled yachting experience…",
+    "price": {
+      "amount": "1,388,000",
+      "currency": "USD",
+      "on_application": false,
+      "starting_price": false
+    },
+    "price_history": [
+      {
+        "amount": "1388000",
+        "currency": "USD",
+        "changed_at": "2025-05-15T17:37:01Z"
+      },
+      {
+        "amount": "1450000",
+        "currency": "USD",
+        "changed_at": "2025-02-04T15:06:12Z"
+      }
+    ],
+    "location": {
+      "display": "Seattle, Washington, United States",
+      "city": "Seattle",
+      "state": "Washington",
+      "country": "US",
+      "marina": null,
+      "coordinates": null
+    },
+    "brokers": [
+      {
+        "name": "Alex Marlow",
+        "title": "Senior Broker",
+        "email": "alex.marlow@authority.example",
+        "phone": "+1 555 0100",
+        "photo_url": null
+      }
+    ]
+  },
+  "specifications": {
+    "beam_m": 5.05,
+    "draft_max_m": 1.27,
+    "draft_min_m": null,
+    "lwl_m": null,
+    "lod_m": null,
+    "bridge_clearance_m": null,
+    "gross_tonnage": null,
+    "displacement_kg": null,
+    "fuel_capacity_l": 3997.39,
+    "water_capacity_l": 798.72,
+    "holding_tank_l": 200.63,
+    "cruise_speed_kn": 20,
+    "max_speed_kn": 29,
+    "range_nmi": null,
+    "fuel_consumption_lph": null,
+    "hull_material": "Fiberglass",
+    "superstructure_material": null,
+    "deck_material": null,
+    "hull_shape": "planing",
+    "hull_color": null,
+    "naval_architect": null,
+    "exterior_designer": null,
+    "interior_designer": null,
+    "fuel_type": "diesel",
+    "flag": "United States",
+    "registry_port": null,
+    "power_or_sail": "power",
+    "category": {
+      "name": "Motor Yacht",
+      "slug": "motor-yacht"
+    },
+    "cabins": 2,
+    "sleeps": 4,
+    "heads": 2,
+    "guests_cruising": null,
+    "guests_entertaining": null,
+    "cabin_config": {
+      "double": null,
+      "twin": null,
+      "triple": null,
+      "single": null,
+      "convertible": null
+    },
+    "berth_config": {
+      "king": null,
+      "queen": null,
+      "double": null,
+      "twin": null,
+      "single": null,
+      "pullman": null,
+      "bunk": null
+    },
+    "crew_accommodation": {
+      "cabins": null,
+      "berths": null,
+      "layout": null
+    },
+    "engines": [
+      {
+        "make": "Volvo",
+        "model": "D11",
+        "year": 2016,
+        "type": "inboard",
+        "drive_type": "Direct",
+        "power_hp": 675,
+        "power_kw": 503.35,
+        "fuel_type": "diesel",
+        "hours": 777,
+        "hours_recorded_at": null,
+        "location": "starboard"
+      },
+      {
+        "make": "Volvo",
+        "model": "D11",
+        "year": 2016,
+        "type": "inboard",
+        "drive_type": "Direct",
+        "power_hp": 675,
+        "power_kw": 503.35,
+        "fuel_type": "diesel",
+        "hours": 777,
+        "hours_recorded_at": null,
+        "location": "port"
+      }
+    ],
+    "generators": [
+      {
+        "make": "Onan",
+        "model": null,
+        "power_kw": 21,
+        "hours": 550,
+        "hours_recorded_at": null
+      }
+    ],
+    "tenders": null
+  },
+  "descriptions": [
+    {
+      "section": "overview",
+      "content": "<p>BLUE SKY, the 50’ Maritimo, is a well-maintained, extensively upgraded motor yacht…</p>"
+    }
+  ],
+  "features": [
+    {
+      "category": "equipment",
+      "name": "Water maker",
+      "slug": "water-maker",
+      "quantity": null
+    },
+    {
+      "category": "comfort",
+      "name": "Air conditioning",
+      "slug": "air-conditioning",
+      "quantity": null
+    }
+  ],
+  "media": {
+    "profile": {
+      "url": "https://authority.example/media/listings/018f6d2e-9f0a-7cc3-a1b2-3c4d5e6f7a8b/profile.jpg",
+      "sha256": "ef6d847c6ea6004cea1b1f1f9626c6ce4088442d63dde6e08fc404a822cf4c13",
+      "width": 4000,
+      "height": 2667,
+      "caption": "Profile",
+      "thumbnail_url": "https://authority.example/media/listings/018f6d2e-9f0a-7cc3-a1b2-3c4d5e6f7a8b/profile-thumb.jpg"
+    },
+    "gallery": [
+      {
+        "url": "https://authority.example/media/listings/018f6d2e-9f0a-7cc3-a1b2-3c4d5e6f7a8b/02.jpg",
+        "sha256": "78a5b7b942ebaa3ffd8f54b695bda9619787b0ebd7ac7fffc29642e5d62a9695",
+        "category": "exterior",
+        "width": 4000,
+        "height": 2667,
+        "caption": "Aft deck",
+        "sort": 1,
+        "thumbnail_url": null
+      }
+    ],
+    "layouts": [],
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=TRH6e_-jtVU",
+        "sha256": null,
+        "caption": "Video walkthrough",
+        "sort": 1
+      }
+    ],
+    "tours": [],
+    "documents": []
+  },
+  "charter": null,
+  "usage": {
+    "display": true,
+    "attribution_required": true,
+    "attribution_text": "Listing courtesy of Example Yacht Brokerage",
+    "marketing_materials": true,
+    "ai_indexing": true,
+    "expires_with_listing": true
+  },
+  "compliance": {
+    "not_for_sale_to_us_residents_in_us_waters": false,
+    "vat_status": null,
+    "ce_certified": null,
+    "mca_compliant": null,
+    "classification": []
+  }
+}

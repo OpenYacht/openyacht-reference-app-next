@@ -1,0 +1,194 @@
+{
+  "id": "https://authority.example/openyacht/v1/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b",
+  "type": "charter",
+  "status": "active",
+  "updated_at": "2026-08-20T09:12:00Z",
+  "listed_at": "2026-03-15T10:00:00Z",
+  "condition": "used",
+  "agreement": { "type": "central", "co_brokerage": true },
+  "vessel": {
+    "hin": null,
+    "imo": null,
+    "mmsi": "319088100",
+    "official_number": null,
+    "builder": { "name": "Benetti", "slug": "benetti" },
+    "model": { "name": "Classic 121", "slug": null },
+    "year_built": 2008,
+    "refit_year": 2024,
+    "loa_m": 36.9,
+    "previous_names": ["WHITE ORCHID"]
+  },
+  "listing": {
+    "name": "SEA MERIDIAN",
+    "summary": "SEA MERIDIAN is a fully crewed 37m Benetti, refitted 2024, chartering the Western Mediterranean in summer and the Leewards in winter.",
+    "price": null,
+    "price_history": [],
+    "location": {
+      "display": "Palma de Mallorca, Spain",
+      "city": "Palma de Mallorca",
+      "state": null,
+      "country": "ES",
+      "marina": null,
+      "coordinates": null
+    },
+    "brokers": [
+      {
+        "name": "Alex Marlow",
+        "title": "Charter Manager",
+        "email": "alex.marlow@authority.example",
+        "phone": "+1 555 0100",
+        "photo_url": null
+      }
+    ]
+  },
+  "specifications": {
+    "beam_m": 8.05,
+    "draft_max_m": 2.65,
+    "draft_min_m": null,
+    "lwl_m": null,
+    "lod_m": null,
+    "bridge_clearance_m": null,
+    "gross_tonnage": 320,
+    "displacement_kg": null,
+    "fuel_capacity_l": 42000,
+    "water_capacity_l": 9000,
+    "holding_tank_l": null,
+    "cruise_speed_kn": 12,
+    "max_speed_kn": 14,
+    "range_nmi": 3200,
+    "fuel_consumption_lph": null,
+    "hull_material": "Steel",
+    "superstructure_material": "Aluminium",
+    "deck_material": "Teak",
+    "hull_shape": "displacement",
+    "hull_color": "White",
+    "naval_architect": null,
+    "exterior_designer": "Studio Meridiana",
+    "interior_designer": null,
+    "fuel_type": "diesel",
+    "flag": "Cayman Islands",
+    "registry_port": "George Town",
+    "power_or_sail": "power",
+    "category": { "name": "Motor Yacht", "slug": "motor-yacht" },
+    "cabins": 5,
+    "sleeps": 12,
+    "heads": 6,
+    "guests_cruising": 12,
+    "guests_entertaining": 35,
+    "cabin_config": { "double": 3, "twin": 2, "triple": null, "single": 0, "convertible": 1 },
+    "berth_config": { "king": 3, "queen": 1, "double": null, "twin": 4, "single": null, "pullman": 2, "bunk": null },
+    "crew_accommodation": { "cabins": 4, "berths": 8, "layout": "4 rooms, captain's cabin aft, 3 sets of bunks" },
+    "engines": [
+      { "make": "Caterpillar", "model": "3508B", "year": 2008, "type": "inboard", "drive_type": "Direct", "power_hp": 1100, "power_kw": 820.27, "fuel_type": "diesel", "hours": 14200, "hours_recorded_at": "2026-05-02", "location": "port" },
+      { "make": "Caterpillar", "model": "3508B", "year": 2008, "type": "inboard", "drive_type": "Direct", "power_hp": 1100, "power_kw": 820.27, "fuel_type": "diesel", "hours": 14150, "hours_recorded_at": "2026-05-02", "location": "starboard" }
+    ],
+    "generators": [
+      { "make": "Kohler", "model": "80EOZ", "power_kw": 80, "hours": 21000, "hours_recorded_at": "2026-05-02" },
+      { "make": "Kohler", "model": "80EOZ", "power_kw": 80, "hours": 19800, "hours_recorded_at": null }
+    ],
+    "tenders": null
+  },
+  "descriptions": [
+    { "section": "overview", "content": "<p>SEA MERIDIAN pairs a full-beam master on the main deck with four guest cabins below, a 2024 refit throughout, and a crew of eight led by a captain with fifteen Mediterranean seasons.</p>" },
+    { "section": "highlights", "content": "<ul><li>Refitted 2024: new interior soft goods, zero-speed stabilisers</li><li>Full-beam main-deck master</li><li>Jacuzzi and alfresco dining on the sundeck</li></ul>" }
+  ],
+  "features": [
+    { "category": "comfort", "name": "Air conditioning", "slug": "air-conditioning", "quantity": null },
+    { "category": "equipment", "name": "Zero-speed stabilizers", "slug": "stabilizers-anchor", "quantity": null },
+    { "category": "toys", "name": "Williams 505 jet tender", "slug": null, "quantity": null },
+    { "category": "toys", "name": "Seabob", "slug": "seabob", "quantity": 2 }
+  ],
+  "media": {
+    "profile": {
+      "url": "https://authority.example/media/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b/profile.jpg",
+      "sha256": "1f66aeb56a65bff26a9f4d208ab8d0ec79c85f22d90acc8782d1f316f357310d",
+      "width": 4000,
+      "height": 2667,
+      "caption": "Profile at anchor",
+      "thumbnail_url": "https://authority.example/media/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b/profile-thumb.jpg"
+    },
+    "gallery": [
+      { "url": "https://authority.example/media/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b/02.jpg", "sha256": "6369805998dd2b77eb6ed90fa9f160076b8045c670e7386395442bf322da116b", "category": "exterior", "width": 4000, "height": 2667, "caption": "Sundeck jacuzzi", "sort": 1, "thumbnail_url": "https://authority.example/media/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b/02-thumb.jpg" },
+      { "url": "https://authority.example/media/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b/03.jpg", "sha256": "8a06fe110c77edcd4e9013663c4e6a5cd724e9f5bbd0919276f0bbe859d51d27", "category": "interior", "width": 4000, "height": 2667, "caption": "Main salon", "sort": 2, "thumbnail_url": null }
+    ],
+    "layouts": [
+      { "url": "https://authority.example/media/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b/ga.jpg", "sha256": "c21d26699d4743ee7854b24a0621896f6b56165493d32b48014cc38b157e2b39", "width": 3000, "height": 2000, "caption": "General arrangement", "sort": 1, "thumbnail_url": "https://authority.example/media/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b/ga-thumb.jpg" }
+    ],
+    "videos": [],
+    "tours": [
+      { "url": "https://my.matterport.com/show/?m=EXAMPLEoy1", "caption": "Virtual tour", "sort": 1 }
+    ],
+    "documents": [
+      { "url": "https://authority.example/media/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b/brochure.pdf", "sha256": "3968bf595039ca05b9cd8623920ddd02e7d56fa7a31dbbd0520a1273872d8108", "caption": "Charter brochure", "sort": 1 }
+    ]
+  },
+  "charter": {
+    "rates": [
+      {
+        "season": "summer",
+        "rate_type": "weekly",
+        "amount_min": "125000",
+        "amount_max": "135000",
+        "currency": "EUR",
+        "contract_terms": "MYBA",
+        "apa_percent": 30,
+        "vat_percent": null,
+        "valid_from": "2026-05-01",
+        "valid_to": "2026-09-30"
+      },
+      {
+        "season": "winter",
+        "rate_type": "weekly",
+        "amount_min": "110000",
+        "amount_max": "110000",
+        "currency": "USD",
+        "contract_terms": "MYBA",
+        "apa_percent": 30,
+        "vat_percent": null,
+        "valid_from": "2026-12-01",
+        "valid_to": "2027-04-30"
+      }
+    ],
+    "operating_areas": [
+      { "name": "Western Mediterranean", "slug": "western-mediterranean", "season": "summer" },
+      { "name": "Leeward Islands", "slug": "leeward-islands", "season": "winter" }
+    ],
+    "summer_base_port": "Palma de Mallorca",
+    "winter_base_port": "Antigua",
+    "crew": [
+      {
+        "role": "Captain",
+        "name": "Jonas Keller",
+        "nationality": "German",
+        "bio": "Fifteen Mediterranean seasons, MCA Master 3000GT, on board since the 2024 refit.",
+        "photo_url": "https://authority.example/media/listings/019a1b2c-3d4e-7f50-8a6b-7c8d9e0f1a2b/crew-captain.jpg",
+        "tba": false
+      },
+      {
+        "role": "Chef",
+        "name": null,
+        "nationality": null,
+        "bio": null,
+        "photo_url": null,
+        "tba": true
+      }
+    ]
+  },
+  "usage": {
+    "display": true,
+    "attribution_required": true,
+    "attribution_text": "Charter listing courtesy of Example Yacht Brokerage",
+    "marketing_materials": true,
+    "ai_indexing": false,
+    "expires_with_listing": true
+  },
+  "compliance": {
+    "not_for_sale_to_us_residents_in_us_waters": null,
+    "vat_status": null,
+    "ce_certified": null,
+    "mca_compliant": true,
+    "classification": [
+      { "society": "RINA", "notation": "Pleasure", "next_survey_due": "2027-04-01" }
+    ]
+  }
+}

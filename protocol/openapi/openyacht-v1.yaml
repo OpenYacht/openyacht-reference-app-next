@@ -1,0 +1,398 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+
+info:
+  title: OpenYacht Federation API
+  version: 0.1.0
+  summary: Server-to-server sharing of yacht listings between brokerages, with no central operator.
+  description: >-
+    The OpenYacht federation API as every conforming node serves it under
+    `/openyacht/v1/` on its identity domain. **Draft v0.1** — published for
+    review; see the repository README for status and the amendment convention.
+
+
+    The prose specification (`spec/`) is normative; this document and the JSON
+    Schemas it references are normative for JSON shape only — on any conflict
+    the prose wins and this document is defective. Request signing (Ed25519,
+    per `spec/federation-protocol.md`) cannot be expressed in OpenAPI and is
+    documented, not modelled: the four `X-OpenYacht-*` header schemes below
+    are declarative placeholders.
+  contact:
+    name: OpenYacht Protocol
+    url: https://openyacht.org
+  license:
+    name: MIT
+    identifier: MIT
+
+externalDocs:
+  description: The normative prose specification
+  url: https://github.com/OpenYacht/protocol
+
+servers:
+  - url: https://{domain}/openyacht/v1
+    description: Every node serves the API on its own identity domain.
+    variables:
+      domain:
+        default: authority.example
+        description: The node's identity domain (see spec/federation-protocol.md).
+
+security:
+  - NodeHeader: []
+    KeyHeader: []
+    TimestampHeader: []
+    SignatureHeader: []
+
+tags:
+  - name: meta
+    description: Unsigned endpoints — discovery of capabilities and liveness.
+  - name: listings
+    description: Listing sync and dereference — the hot path of the protocol.
+  - name: subscriptions
+    description: Optional push delivery, advertised via the `subscriptions` capability feature.
+  - name: partners
+    description: Partner relationship bootstrap; approval is always a human decision.
+
+paths:
+  /capabilities:
+    get:
+      operationId: getCapabilities
+      tags: [meta]
+      summary: Protocol versions, optional features, and limits
+      description: >-
+        Unsigned. Feature names are the negotiation mechanism: a consumer
+        checks for a feature before using it and degrades gracefully when
+        absent. The `features` object lists optional protocol features only —
+        absence of a flag means the capability is part of the mandatory
+        baseline.
+      security: []
+      responses:
+        "200":
+          description: The node's capabilities.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/v1/capabilities.schema.json"
+              examples:
+                capabilities:
+                  summary: A node with all optional features
+                  externalValue: ../examples/valid/capabilities.json
+
+  /listings:
+    get:
+      operationId: listListings
+      tags: [listings]
+      summary: Page through listings and tombstones
+      description: >-
+        `updated_since` returns listings whose federation-visible state changed
+        at or after the timestamp — including listings that became invisible to
+        this partner (withdrawn, sold, or unshared), which appear as
+        tombstones; a consumer that polls with its last sync time never misses
+        a removal. Pagination is opaque-cursor based; `meta.next_cursor` is
+        absent on the last page. Responses contain only what the requesting
+        partner's sharing rules allow, filtered server-side.
+      parameters:
+        - name: updated_since
+          in: query
+          required: false
+          description: RFC 3339 UTC timestamp; return entries changed at or after it.
+          schema:
+            type: string
+            format: date-time
+        - name: cursor
+          in: query
+          required: false
+          description: Opaque pagination cursor from the previous page's `meta.next_cursor`.
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          description: Requested page size; capped by the node's advertised `limits.page_size_max`.
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: One page of listings and tombstones plus sync metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/v1/collection.schema.json"
+              examples:
+                page:
+                  summary: A page containing a tombstone, with another page following
+                  externalValue: ../examples/valid/collection-page.json
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /listings/{uuid}:
+    get:
+      operationId: getListing
+      tags: [listings]
+      summary: Dereference a canonical listing URI
+      description: >-
+        The dereference target of canonical listing URIs
+        (`https://{domain}/openyacht/v1/listings/{uuid}`). Terminal listings
+        (`sold`/`withdrawn`) SHOULD remain dereferenceable for at least 12
+        months; after that the node MAY answer `410 Gone`.
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: The listing UUID, minted once at creation and never reused.
+          schema:
+            type: string
+            pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      responses:
+        "200":
+          description: The current state of the listing.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/v1/listing.schema.json"
+              examples:
+                sale:
+                  summary: A complete sale listing
+                  externalValue: ../examples/valid/sale-full.json
+                charter:
+                  summary: A complete charter listing
+                  externalValue: ../examples/valid/charter-full.json
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "410":
+          $ref: "#/components/responses/Gone"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /subscriptions:
+    post:
+      operationId: createSubscription
+      tags: [subscriptions]
+      summary: Register a push callback
+      description: >-
+        Only on nodes advertising the `subscriptions` feature. On changes, the
+        authority POSTs the changed listing (or tombstone) to the callback,
+        signed exactly like any federation request. Delivery is at-least-once
+        with exponential-backoff retries for 24 hours; consumers deduplicate
+        on `(id, updated_at)` and still reconcile by polling.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionRequest"
+      responses:
+        "204":
+          description: Subscription registered (replacing any previous callback for this partner).
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+      callbacks:
+        listingChanged:
+          "{$request.body#/callback}":
+            post:
+              operationId: receiveListingChange
+              tags: [subscriptions]
+              summary: Authority delivers a changed listing or tombstone
+              description: >-
+                Sent by the authority to the consumer's registered inbox,
+                signed like any federation request — the consumer verifies the
+                four `X-OpenYacht-*` headers the same way a node verifies any
+                inbound request.
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      anyOf:
+                        - $ref: "../schemas/v1/listing.schema.json"
+                        - $ref: "../schemas/v1/tombstone.schema.json"
+              responses:
+                "200":
+                  description: Delivery acknowledged; any 2xx counts as delivered.
+    delete:
+      operationId: deleteSubscription
+      tags: [subscriptions]
+      summary: Remove the caller's subscription
+      description: Removes the registered callback for the requesting partner.
+      responses:
+        "204":
+          description: Subscription removed (or none existed).
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /partners/request:
+    post:
+      operationId: requestPartnership
+      tags: [partners]
+      summary: Request a partner relationship
+      description: >-
+        The requesting node signs this like any federation request; verifying
+        it entails fetching the sender's well-known document. The receiver
+        stores the sender as `provisional` and notifies its administrators —
+        approval is always a human decision. There is no partner listing
+        endpoint: who a brokerage shares with is its own business.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartnerRequest"
+      responses:
+        "202":
+          description: Stored as provisional; administrators notified.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /health:
+    get:
+      operationId: getHealth
+      tags: [meta]
+      summary: Liveness check
+      description: Unsigned; used for liveness checks only.
+      security: []
+      responses:
+        "200":
+          description: The node is alive.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+components:
+  securitySchemes:
+    NodeHeader:
+      type: apiKey
+      in: header
+      name: X-OpenYacht-Node
+      description: >-
+        Sender's identity domain. Part of the Ed25519 request signature scheme
+        defined in spec/federation-protocol.md — OpenAPI cannot express
+        request signing and this document does not pretend to; all four
+        X-OpenYacht-* headers are required together on every signed request.
+    KeyHeader:
+      type: apiKey
+      in: header
+      name: X-OpenYacht-Key
+      description: >-
+        Key ID — first 16 hex characters of the SHA-256 of the sender's raw
+        32-byte Ed25519 public key. See spec/federation-protocol.md.
+    TimestampHeader:
+      type: apiKey
+      in: header
+      name: X-OpenYacht-Timestamp
+      description: >-
+        RFC 3339 UTC timestamp, rejected outside ±300 seconds of the
+        receiver's clock. See spec/federation-protocol.md.
+    SignatureHeader:
+      type: apiKey
+      in: header
+      name: X-OpenYacht-Signature
+      description: >-
+        Base64 Ed25519 signature over the signing string (method, path+query,
+        lowercase host, timestamp, body SHA-256). Byte-exact test vectors in
+        spec/signing-test-vectors.md.
+  schemas:
+    SubscriptionRequest:
+      type: object
+      description: Callback registration for push delivery.
+      properties:
+        callback:
+          type: string
+          format: uri
+          description: HTTPS inbox URL that will receive signed POSTs.
+      required: [callback]
+      additionalProperties: false
+    PartnerRequest:
+      type: object
+      description: Human-readable introduction accompanying a partnership request.
+      properties:
+        message:
+          type: string
+          description: Free-text introduction shown to the receiving administrators.
+        contact_email:
+          type: string
+          description: Address a human can reply to.
+      required: [message, contact_email]
+      additionalProperties: false
+    Health:
+      type: object
+      description: Liveness response.
+      properties:
+        status:
+          const: ok
+        time:
+          type: string
+          format: date-time
+      required: [status, time]
+  responses:
+    Unauthorized:
+      description: >-
+        Signature or identity failure — `SIGNATURE_INVALID`,
+        `TIMESTAMP_OUT_OF_RANGE`, or `PARTNER_UNKNOWN`.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/v1/error.schema.json"
+          examples:
+            signatureInvalid:
+              summary: Signature verification failed
+              externalValue: ../examples/valid/error.json
+    Forbidden:
+      description: Partner refused — `PARTNER_BLOCKED` or `PARTNER_PROVISIONAL`.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/v1/error.schema.json"
+    NotFound:
+      description: No such listing — `NOT_FOUND`.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/v1/error.schema.json"
+    Gone:
+      description: Terminal listing past its retention window — `GONE`.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/v1/error.schema.json"
+    ValidationError:
+      description: Request body failed validation — `VALIDATION_ERROR`.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/v1/error.schema.json"
+    RateLimited:
+      description: Per-partner limit exceeded — `RATE_LIMITED`; retry after the indicated delay.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/v1/error.schema.json"

@@ -1,0 +1,621 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openyacht.org/schemas/v1/listing.schema.json",
+  "title": "OpenYacht Listing",
+  "description": "Full listing payload as served at GET /openyacht/v1/listings/{uuid} and inside /listings collection responses. The prose spec (spec/listing-schema.md) is normative; this schema is normative for JSON shape only — on any conflict the prose wins and this schema is defective. Deliberately not encoded here: builder-slug registry membership, field-group gating semantics, the 24-hour update obligation, HTML sanitisation of descriptions[].content, request signing. Conventions: every field is present (complete objects — null, never absent), and objects admit x_-prefixed private extension fields only.",
+  "type": "object",
+  "properties": {
+    "id": { "$ref": "#/$defs/canonical_uri" },
+    "type": { "enum": ["sale", "charter"] },
+    "status": {
+      "enum": ["active", "under_offer", "sold", "withdrawn"],
+      "description": "draft exists in the lifecycle but is never distributed, so it is invalid on the wire."
+    },
+    "updated_at": { "$ref": "#/$defs/timestamp" },
+    "listed_at": { "anyOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+    "condition": { "enum": ["new", "used", null] },
+    "agreement": {
+      "description": "Mandate metadata. ⚠ Open question 5: whether this belongs on the wire at all is unresolved; a counter-proposal (a single self-attested CA-on-file flag) is on the table.",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "enum": ["central", "exclusive", "open", null] },
+            "co_brokerage": { "type": ["boolean", "null"] }
+          },
+          "required": ["type", "co_brokerage"],
+          "patternProperties": { "^x_": true },
+          "additionalProperties": false
+        },
+        { "type": "null" }
+      ]
+    },
+    "vessel": { "$ref": "#/$defs/vessel" },
+    "listing": { "$ref": "#/$defs/listing" },
+    "specifications": { "$ref": "#/$defs/specifications" },
+    "descriptions": { "type": "array", "items": { "$ref": "#/$defs/description" } },
+    "features": { "type": "array", "items": { "$ref": "#/$defs/feature" } },
+    "media": { "$ref": "#/$defs/media" },
+    "charter": {
+      "description": "Charter-only block; null when type is sale (enforced by the type conditional below).",
+      "anyOf": [{ "$ref": "#/$defs/charter" }, { "type": "null" }]
+    },
+    "usage": { "$ref": "#/$defs/usage" },
+    "compliance": { "$ref": "#/$defs/compliance" }
+  },
+  "required": [
+    "id", "type", "status", "updated_at", "listed_at", "condition", "agreement",
+    "vessel", "listing", "specifications", "descriptions", "features", "media",
+    "charter", "usage", "compliance"
+  ],
+  "patternProperties": { "^x_": true },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "type": "object", "properties": { "type": { "const": "charter" } }, "required": ["type"] },
+      "then": {
+        "type": "object",
+        "properties": {
+          "charter": { "type": "object" },
+          "listing": { "type": "object", "properties": { "price": { "type": "null" } } }
+        }
+      },
+      "else": {
+        "type": "object",
+        "properties": { "charter": { "type": "null" } }
+      }
+    }
+  ],
+  "$defs": {
+    "canonical_uri": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^/]+/openyacht/v1/listings/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "Canonical listing URI minted by the authority: https://{authority-domain}/openyacht/v1/listings/{uuid}. Immutable; compared as an opaque string."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$",
+      "description": "RFC 3339 UTC, Z-suffixed."
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Date without time-of-day, YYYY-MM-DD."
+    },
+    "money_amount": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+)?$",
+      "description": "Monetary amount as a string of decimal digits with optional . separator. Money is never a float."
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217 currency code."
+    },
+    "country": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "ISO 3166-1 alpha-2 country code."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase hex SHA-256 of the file's raw bytes."
+    },
+    "uri": { "type": "string", "format": "uri" },
+    "vocab": {
+      "type": "object",
+      "description": "Shared vocabulary shape: name is display truth, slug the interoperability mechanism. A consumer that does not recognise a slug falls back to the name.",
+      "properties": {
+        "name": { "type": "string" },
+        "slug": { "type": ["string", "null"] }
+      },
+      "required": ["name", "slug"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "vessel": {
+      "type": "object",
+      "description": "Real-world identity of the physical boat, for matching, not authority. All fields nullable; nulls that say unknown beat guesses.",
+      "properties": {
+        "hin": { "type": ["string", "null"] },
+        "imo": { "type": ["string", "null"] },
+        "mmsi": { "type": ["string", "null"] },
+        "official_number": { "type": ["string", "null"] },
+        "builder": {
+          "description": "slug, when non-null, MUST be present in the vendored builder registry (registry/builders.json) — a prose rule this schema deliberately does not encode.",
+          "anyOf": [{ "$ref": "#/$defs/vocab" }, { "type": "null" }]
+        },
+        "model": { "anyOf": [{ "$ref": "#/$defs/vocab" }, { "type": "null" }] },
+        "year_built": { "type": ["integer", "null"] },
+        "refit_year": { "type": ["integer", "null"] },
+        "loa_m": { "type": ["number", "null"] },
+        "previous_names": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": [
+        "hin", "imo", "mmsi", "official_number", "builder", "model",
+        "year_built", "refit_year", "loa_m", "previous_names"
+      ],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "price": {
+      "type": "object",
+      "properties": {
+        "amount": { "anyOf": [{ "$ref": "#/$defs/money_amount" }, { "type": "null" }] },
+        "currency": { "anyOf": [{ "$ref": "#/$defs/currency" }, { "type": "null" }] },
+        "on_application": { "type": "boolean" },
+        "starting_price": { "type": "boolean" }
+      },
+      "required": ["amount", "currency", "on_application", "starting_price"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "price_history_entry": {
+      "type": "object",
+      "properties": {
+        "amount": { "$ref": "#/$defs/money_amount" },
+        "currency": { "$ref": "#/$defs/currency" },
+        "changed_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "required": ["amount", "currency", "changed_at"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "display": { "type": "string" },
+        "city": { "type": ["string", "null"] },
+        "state": { "type": ["string", "null"] },
+        "country": { "anyOf": [{ "$ref": "#/$defs/country" }, { "type": "null" }] },
+        "marina": { "type": ["string", "null"] },
+        "coordinates": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "lat": { "type": "number" },
+                "lon": { "type": "number" }
+              },
+              "required": ["lat", "lon"],
+              "patternProperties": { "^x_": true },
+              "additionalProperties": false
+            },
+            { "type": "null" }
+          ]
+        }
+      },
+      "required": ["display", "city", "state", "country", "marina", "coordinates"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "broker": {
+      "type": "object",
+      "description": "Attribution and contact, not identity — brokerage identity is the authority node itself.",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": ["string", "null"] },
+        "email": { "type": ["string", "null"] },
+        "phone": { "type": ["string", "null"] },
+        "photo_url": { "anyOf": [{ "$ref": "#/$defs/uri" }, { "type": "null" }] }
+      },
+      "required": ["name", "title", "email", "phone", "photo_url"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "listing": {
+      "type": "object",
+      "description": "The commercial facts of this mandate.",
+      "properties": {
+        "name": { "type": "string" },
+        "summary": { "type": ["string", "null"] },
+        "price": {
+          "description": "null on charter listings (charter pricing is charter.rates); enforced by the top-level conditional.",
+          "anyOf": [{ "$ref": "#/$defs/price" }, { "type": "null" }]
+        },
+        "price_history": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/price_history_entry" },
+          "description": "Most recent first; the first entry always matches the current price (prose rule, not encoded)."
+        },
+        "location": { "anyOf": [{ "$ref": "#/$defs/location" }, { "type": "null" }] },
+        "brokers": { "type": "array", "items": { "$ref": "#/$defs/broker" } }
+      },
+      "required": ["name", "summary", "price", "price_history", "location", "brokers"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "cabin_config": {
+      "type": "object",
+      "description": "Room-level properties; a convertible cabin can be split/re-made.",
+      "properties": {
+        "double": { "type": ["integer", "null"] },
+        "twin": { "type": ["integer", "null"] },
+        "triple": { "type": ["integer", "null"] },
+        "single": { "type": ["integer", "null"] },
+        "convertible": { "type": ["integer", "null"] }
+      },
+      "required": ["double", "twin", "triple", "single", "convertible"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "berth_config": {
+      "type": "object",
+      "description": "Sleeping surfaces in the typical/default makeup.",
+      "properties": {
+        "king": { "type": ["integer", "null"] },
+        "queen": { "type": ["integer", "null"] },
+        "double": { "type": ["integer", "null"] },
+        "twin": { "type": ["integer", "null"] },
+        "single": { "type": ["integer", "null"] },
+        "pullman": { "type": ["integer", "null"] },
+        "bunk": { "type": ["integer", "null"] }
+      },
+      "required": ["king", "queen", "double", "twin", "single", "pullman", "bunk"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "crew_accommodation": {
+      "type": "object",
+      "properties": {
+        "cabins": { "type": ["integer", "null"] },
+        "berths": { "type": ["integer", "null"] },
+        "layout": { "type": ["string", "null"] }
+      },
+      "required": ["cabins", "berths", "layout"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "engine": {
+      "type": "object",
+      "properties": {
+        "make": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] },
+        "year": { "type": ["integer", "null"] },
+        "type": { "enum": ["inboard", "outboard", "saildrive", "pod", "jet", null] },
+        "drive_type": { "type": ["string", "null"] },
+        "power_hp": { "type": ["number", "null"] },
+        "power_kw": { "type": ["number", "null"] },
+        "fuel_type": { "enum": ["diesel", "petrol", "electric", "hybrid", null] },
+        "hours": { "type": ["number", "null"] },
+        "hours_recorded_at": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] },
+        "location": { "type": ["string", "null"] }
+      },
+      "required": [
+        "make", "model", "year", "type", "drive_type", "power_hp", "power_kw",
+        "fuel_type", "hours", "hours_recorded_at", "location"
+      ],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "generator": {
+      "type": "object",
+      "properties": {
+        "make": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] },
+        "power_kw": { "type": ["number", "null"] },
+        "hours": { "type": ["number", "null"] },
+        "hours_recorded_at": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] }
+      },
+      "required": ["make", "model", "power_kw", "hours", "hours_recorded_at"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "specifications": {
+      "type": "object",
+      "description": "One flat object; canonical metric units, one unit per concept (_m, _kg, _l, _kn, _nmi, _lph; gross_tonnage dimensionless).",
+      "properties": {
+        "beam_m": { "type": ["number", "null"] },
+        "draft_max_m": { "type": ["number", "null"] },
+        "draft_min_m": { "type": ["number", "null"] },
+        "lwl_m": { "type": ["number", "null"] },
+        "lod_m": { "type": ["number", "null"] },
+        "bridge_clearance_m": { "type": ["number", "null"] },
+        "gross_tonnage": { "type": ["number", "null"] },
+        "displacement_kg": { "type": ["number", "null"] },
+        "fuel_capacity_l": { "type": ["number", "null"] },
+        "water_capacity_l": { "type": ["number", "null"] },
+        "holding_tank_l": { "type": ["number", "null"] },
+        "cruise_speed_kn": { "type": ["number", "null"] },
+        "max_speed_kn": { "type": ["number", "null"] },
+        "range_nmi": { "type": ["number", "null"] },
+        "fuel_consumption_lph": { "type": ["number", "null"] },
+        "hull_material": { "type": ["string", "null"] },
+        "superstructure_material": { "type": ["string", "null"] },
+        "deck_material": { "type": ["string", "null"] },
+        "hull_shape": {
+          "enum": ["planing", "semi_displacement", "displacement", "hydrofoil", "catamaran", "trimaran", null]
+        },
+        "hull_color": { "type": ["string", "null"] },
+        "naval_architect": { "type": ["string", "null"] },
+        "exterior_designer": { "type": ["string", "null"] },
+        "interior_designer": { "type": ["string", "null"] },
+        "fuel_type": { "enum": ["diesel", "petrol", "electric", "hybrid", null] },
+        "flag": { "type": ["string", "null"] },
+        "registry_port": { "type": ["string", "null"] },
+        "power_or_sail": {
+          "enum": ["power", "sail"],
+          "description": "Required (non-null) per the prose — the one specification every listing can state."
+        },
+        "category": {
+          "description": "slug, when non-null, MUST be present in the vendored category registry (registry/categories.json) — a prose rule this schema deliberately does not encode.",
+          "anyOf": [{ "$ref": "#/$defs/vocab" }, { "type": "null" }]
+        },
+        "cabins": { "type": ["integer", "null"] },
+        "sleeps": { "type": ["integer", "null"] },
+        "heads": { "type": ["integer", "null"] },
+        "guests_cruising": {
+          "type": ["integer", "null"],
+          "description": "Guests carried under way — the regulatory limit for a commercially registered yacht, commonly 12."
+        },
+        "guests_entertaining": {
+          "type": ["integer", "null"],
+          "description": "Guests carried while static (at anchor or dockside) — the 'entertaining' or 'dockside' capacity the market quotes separately from the cruising limit. Typically higher than guests_cruising; null when the authority does not hold it."
+        },
+        "cabin_config": { "anyOf": [{ "$ref": "#/$defs/cabin_config" }, { "type": "null" }] },
+        "berth_config": { "anyOf": [{ "$ref": "#/$defs/berth_config" }, { "type": "null" }] },
+        "crew_accommodation": { "anyOf": [{ "$ref": "#/$defs/crew_accommodation" }, { "type": "null" }] },
+        "engines": { "type": "array", "items": { "$ref": "#/$defs/engine" } },
+        "generators": { "type": "array", "items": { "$ref": "#/$defs/generator" } },
+        "tenders": { "type": ["string", "null"] }
+      },
+      "required": [
+        "beam_m", "draft_max_m", "draft_min_m", "lwl_m", "lod_m", "bridge_clearance_m",
+        "gross_tonnage", "displacement_kg", "fuel_capacity_l", "water_capacity_l",
+        "holding_tank_l", "cruise_speed_kn", "max_speed_kn", "range_nmi",
+        "fuel_consumption_lph", "hull_material", "superstructure_material",
+        "deck_material", "hull_shape", "hull_color", "naval_architect",
+        "exterior_designer", "interior_designer", "fuel_type", "flag",
+        "registry_port", "power_or_sail", "category", "cabins", "sleeps", "heads",
+        "guests_cruising", "guests_entertaining",
+        "cabin_config", "berth_config", "crew_accommodation", "engines",
+        "generators", "tenders"
+      ],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "description": {
+      "type": "object",
+      "description": "content is restricted HTML (prose Conventions §7); consumers MUST sanitise before rendering regardless — not encodable here.",
+      "properties": {
+        "section": { "type": "string" },
+        "content": { "type": "string" }
+      },
+      "required": ["section", "content"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "feature": {
+      "type": "object",
+      "properties": {
+        "category": { "type": ["string", "null"] },
+        "name": { "type": "string" },
+        "slug": { "type": ["string", "null"] },
+        "quantity": { "type": ["integer", "null"], "minimum": 1 }
+      },
+      "required": ["category", "name", "slug", "quantity"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "profile": {
+      "type": "object",
+      "description": "The explicit hero image. thumbnail_url is required non-null whenever profile is present.",
+      "properties": {
+        "url": { "$ref": "#/$defs/uri" },
+        "sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "width": { "type": ["integer", "null"] },
+        "height": { "type": ["integer", "null"] },
+        "caption": { "type": ["string", "null"] },
+        "thumbnail_url": { "$ref": "#/$defs/uri" }
+      },
+      "required": ["url", "sha256", "width", "height", "caption", "thumbnail_url"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "gallery_item": {
+      "type": "object",
+      "description": "thumbnail_url is nullable: null means no small rendition is served and consumers derive from url.",
+      "properties": {
+        "url": { "$ref": "#/$defs/uri" },
+        "sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "category": { "enum": ["exterior", "interior", "lifestyle", "crew", null] },
+        "width": { "type": ["integer", "null"] },
+        "height": { "type": ["integer", "null"] },
+        "caption": { "type": ["string", "null"] },
+        "sort": { "type": "integer" },
+        "thumbnail_url": { "anyOf": [{ "$ref": "#/$defs/uri" }, { "type": "null" }] }
+      },
+      "required": ["url", "sha256", "category", "width", "height", "caption", "sort", "thumbnail_url"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "layout_item": {
+      "type": "object",
+      "description": "thumbnail_url is nullable: null means no small rendition is served and consumers derive from url.",
+      "properties": {
+        "url": { "$ref": "#/$defs/uri" },
+        "sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "width": { "type": ["integer", "null"] },
+        "height": { "type": ["integer", "null"] },
+        "caption": { "type": ["string", "null"] },
+        "sort": { "type": "integer" },
+        "thumbnail_url": { "anyOf": [{ "$ref": "#/$defs/uri" }, { "type": "null" }] }
+      },
+      "required": ["url", "sha256", "width", "height", "caption", "sort", "thumbnail_url"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "video_item": {
+      "type": "object",
+      "description": "MAY point to external platforms; sha256 is null for external URLs, required for authority-hosted files (prose rule).",
+      "properties": {
+        "url": { "$ref": "#/$defs/uri" },
+        "sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "caption": { "type": ["string", "null"] },
+        "sort": { "type": "integer" }
+      },
+      "required": ["url", "sha256", "caption", "sort"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "tour_item": {
+      "type": "object",
+      "properties": {
+        "url": { "$ref": "#/$defs/uri" },
+        "caption": { "type": ["string", "null"] },
+        "sort": { "type": "integer" }
+      },
+      "required": ["url", "caption", "sort"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "document_item": {
+      "type": "object",
+      "properties": {
+        "url": { "$ref": "#/$defs/uri" },
+        "sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "caption": { "type": ["string", "null"] },
+        "sort": { "type": "integer" }
+      },
+      "required": ["url", "sha256", "caption", "sort"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "media": {
+      "type": "object",
+      "description": "Typed collections, not one mixed array. profile: null is the only correct representation of a listing with no imagery — placeholders are prohibited.",
+      "properties": {
+        "profile": { "anyOf": [{ "$ref": "#/$defs/profile" }, { "type": "null" }] },
+        "gallery": { "type": "array", "items": { "$ref": "#/$defs/gallery_item" } },
+        "layouts": { "type": "array", "items": { "$ref": "#/$defs/layout_item" } },
+        "videos": { "type": "array", "items": { "$ref": "#/$defs/video_item" } },
+        "tours": { "type": "array", "items": { "$ref": "#/$defs/tour_item" } },
+        "documents": { "type": "array", "items": { "$ref": "#/$defs/document_item" } }
+      },
+      "required": ["profile", "gallery", "layouts", "videos", "tours", "documents"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "rate": {
+      "type": "object",
+      "properties": {
+        "season": {
+          "type": "string",
+          "description": "summer | winter | a free-text label for special periods — deliberately not a closed enum."
+        },
+        "rate_type": { "enum": ["weekly", "daily"] },
+        "amount_min": { "anyOf": [{ "$ref": "#/$defs/money_amount" }, { "type": "null" }] },
+        "amount_max": { "anyOf": [{ "$ref": "#/$defs/money_amount" }, { "type": "null" }] },
+        "currency": { "anyOf": [{ "$ref": "#/$defs/currency" }, { "type": "null" }] },
+        "contract_terms": { "type": ["string", "null"] },
+        "apa_percent": { "type": ["number", "null"] },
+        "vat_percent": { "type": ["number", "null"] },
+        "valid_from": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] },
+        "valid_to": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] }
+      },
+      "required": [
+        "season", "rate_type", "amount_min", "amount_max", "currency",
+        "contract_terms", "apa_percent", "vat_percent", "valid_from", "valid_to"
+      ],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "operating_area": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "slug": { "type": ["string", "null"] },
+        "season": { "type": ["string", "null"] }
+      },
+      "required": ["name", "slug", "season"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "crew_member": {
+      "type": "object",
+      "description": "Crew bios and photos are personal data; distribution requires a charter-manager/captain attestation and inherits the listing's usage terms (prose rules).",
+      "properties": {
+        "role": { "type": "string" },
+        "name": { "type": ["string", "null"] },
+        "nationality": { "type": ["string", "null"] },
+        "bio": { "type": ["string", "null"] },
+        "photo_url": { "anyOf": [{ "$ref": "#/$defs/uri" }, { "type": "null" }] },
+        "tba": {
+          "type": "boolean",
+          "description": "true represents an unannounced position (name et al. null)."
+        }
+      },
+      "required": ["role", "name", "nationality", "bio", "photo_url", "tba"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "charter": {
+      "type": "object",
+      "properties": {
+        "rates": { "type": "array", "items": { "$ref": "#/$defs/rate" } },
+        "operating_areas": { "type": "array", "items": { "$ref": "#/$defs/operating_area" } },
+        "summer_base_port": { "type": ["string", "null"] },
+        "winter_base_port": { "type": ["string", "null"] },
+        "crew": { "type": "array", "items": { "$ref": "#/$defs/crew_member" } }
+      },
+      "required": [
+        "rates", "operating_areas",
+        "summer_base_port", "winter_base_port", "crew"
+      ],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "usage": {
+      "type": "object",
+      "description": "Terms under which the receiving brokerage may use the data; normative definition in spec/yacht-identity.md.",
+      "properties": {
+        "display": { "type": "boolean" },
+        "attribution_required": { "type": "boolean" },
+        "attribution_text": { "type": ["string", "null"] },
+        "marketing_materials": { "type": "boolean" },
+        "ai_indexing": { "type": "boolean" },
+        "expires_with_listing": { "type": "boolean" }
+      },
+      "required": [
+        "display", "attribution_required", "attribution_text",
+        "marketing_materials", "ai_indexing", "expires_with_listing"
+      ],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "classification_entry": {
+      "type": "object",
+      "properties": {
+        "society": { "type": "string" },
+        "notation": { "type": ["string", "null"] },
+        "next_survey_due": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] }
+      },
+      "required": ["society", "notation", "next_survey_due"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    },
+    "compliance": {
+      "type": "object",
+      "properties": {
+        "not_for_sale_to_us_residents_in_us_waters": { "type": ["boolean", "null"] },
+        "vat_status": {
+          "type": ["string", "null"],
+          "description": "Free text, deliberately not an enum; paid / not_paid / exempt are suggested values only. ⚠ Open question 3."
+        },
+        "ce_certified": { "type": ["boolean", "null"] },
+        "mca_compliant": { "type": ["boolean", "null"] },
+        "classification": { "type": "array", "items": { "$ref": "#/$defs/classification_entry" } }
+      },
+      "required": [
+        "not_for_sale_to_us_residents_in_us_waters", "vat_status",
+        "ce_certified", "mca_compliant", "classification"
+      ],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    }
+  }
+}

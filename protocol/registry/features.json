@@ -1,0 +1,353 @@
+{
+	"registry": "openyacht-features",
+	"version": "2026.08.0",
+	"canonical_url": "https://openyacht.org/registry/features.json",
+	"notes": "Well-known feature slugs for the OpenYacht protocol — the non-normative slug list referenced by listing-schema.md §Features. A feature's name is free text on the wire and always display truth; a slug is sent only when the feature matches an entry here, and an unmatched feature is sent with slug null — this list never gates what a feature can be. The category on each entry is this registry's own grouping label for curation and display, not an enum: the category an authority sends on the wire is its own label and need not match this file. Where entries overlap in specificity, authorities should send the most specific entry that is true (stabilizers-anchor over stabilizers, hydraulic-swim-platform over swim-platform), never both. Versioned like the other registries: date-based, vendored, never fetched at request time. Additions via pull request to this repository.",
+	"features": [
+		{
+			"slug": "air-conditioning",
+			"name": "Air Conditioning",
+			"category": "comfort-luxury"
+		},
+		{
+			"slug": "jacuzzi",
+			"name": "Jacuzzi",
+			"category": "comfort-luxury"
+		},
+		{
+			"slug": "wifi",
+			"name": "WiFi",
+			"category": "connectivity"
+		},
+		{
+			"slug": "elevator",
+			"name": "Elevator",
+			"category": "comfort-luxury"
+		},
+		{
+			"slug": "wakeboard-tower",
+			"name": "Wakeboard Tower",
+			"category": "water-sports"
+		},
+		{
+			"slug": "tuna-tower",
+			"name": "Tuna Tower",
+			"category": "fishing"
+		},
+		{
+			"slug": "full-beam-master",
+			"name": "Full Beam Master",
+			"category": "comfort-luxury"
+		},
+		{
+			"slug": "on-deck-master",
+			"name": "On Deck Master",
+			"category": "comfort-luxury"
+		},
+		{
+			"slug": "gym-equipment",
+			"name": "Gym Equipment",
+			"category": "fitness-wellness"
+		},
+		{
+			"slug": "spa-sauna",
+			"name": "Spa / Sauna",
+			"category": "fitness-wellness"
+		},
+		{
+			"slug": "stabilizers",
+			"name": "Stabilizers",
+			"category": "stability-safety"
+		},
+		{
+			"slug": "stabilizers-anchor",
+			"name": "Stabilizers at Anchor",
+			"category": "stability-safety"
+		},
+		{
+			"slug": "stabilizers-underway",
+			"name": "Stabilizers Underway",
+			"category": "stability-safety"
+		},
+		{
+			"slug": "helipad",
+			"name": "Helipad",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "wheelchair-accessible",
+			"name": "Wheelchair Accessible",
+			"category": "accessibility"
+		},
+		{
+			"slug": "bow-thrusters",
+			"name": "Bow Thrusters",
+			"category": "stability-safety"
+		},
+		{
+			"slug": "stern-thrusters",
+			"name": "Stern Thrusters",
+			"category": "stability-safety"
+		},
+		{
+			"slug": "seabob",
+			"name": "Seabob",
+			"category": "water-sports"
+		},
+		{
+			"slug": "jet-ski",
+			"name": "Jet Ski",
+			"category": "water-sports"
+		},
+		{
+			"slug": "water-skis",
+			"name": "Water Skis",
+			"category": "water-sports"
+		},
+		{
+			"slug": "wakeboard",
+			"name": "Wakeboard",
+			"category": "water-sports"
+		},
+		{
+			"slug": "kneeboard",
+			"name": "Kneeboard",
+			"category": "water-sports"
+		},
+		{
+			"slug": "e-foil",
+			"name": "E-Foil",
+			"category": "water-sports"
+		},
+		{
+			"slug": "surfboard",
+			"name": "Surfboard",
+			"category": "water-sports"
+		},
+		{
+			"slug": "paddle-board",
+			"name": "Paddle Board",
+			"category": "paddle-rowing"
+		},
+		{
+			"slug": "kayak",
+			"name": "Kayak",
+			"category": "paddle-rowing"
+		},
+		{
+			"slug": "canoe",
+			"name": "Canoe",
+			"category": "paddle-rowing"
+		},
+		{
+			"slug": "snorkeling",
+			"name": "Snorkeling Equipment",
+			"category": "diving-snorkeling"
+		},
+		{
+			"slug": "scuba-diving",
+			"name": "Scuba Diving",
+			"category": "diving-snorkeling"
+		},
+		{
+			"slug": "sea-scooter",
+			"name": "Sea Scooter",
+			"category": "diving-snorkeling"
+		},
+		{
+			"slug": "hookah-dive-system",
+			"name": "Hookah Dive System",
+			"category": "diving-snorkeling"
+		},
+		{
+			"slug": "nitrox",
+			"name": "Nitrox",
+			"category": "diving-snorkeling"
+		},
+		{
+			"slug": "submersible",
+			"name": "Submersible",
+			"category": "diving-snorkeling"
+		},
+		{
+			"slug": "towable-tubes",
+			"name": "Towable Tubes",
+			"category": "inflatables-towables"
+		},
+		{
+			"slug": "water-slide",
+			"name": "Water Slide",
+			"category": "inflatables-towables"
+		},
+		{
+			"slug": "inflatable-platform",
+			"name": "Inflatable Platform",
+			"category": "inflatables-towables"
+		},
+		{
+			"slug": "trampoline",
+			"name": "Trampoline",
+			"category": "inflatables-towables"
+		},
+		{
+			"slug": "fishing-equipment",
+			"name": "Fishing Equipment",
+			"category": "fishing"
+		},
+		{
+			"slug": "spearfishing",
+			"name": "Spearfishing",
+			"category": "fishing"
+		},
+		{
+			"slug": "kitesurf",
+			"name": "Kitesurf",
+			"category": "sailing-wind"
+		},
+		{
+			"slug": "windsurf",
+			"name": "Windsurf",
+			"category": "sailing-wind"
+		},
+		{
+			"slug": "banana-boat",
+			"name": "Banana Boat",
+			"category": "other-water-toys"
+		},
+		{
+			"slug": "beach-setup",
+			"name": "Beach Setup",
+			"category": "other-water-toys"
+		},
+		{
+			"slug": "flybridge",
+			"name": "Flybridge",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "water-maker",
+			"name": "Water Maker",
+			"category": "systems-equipment"
+		},
+		{
+			"slug": "generator",
+			"name": "Generator",
+			"category": "systems-equipment"
+		},
+		{
+			"slug": "inverter",
+			"name": "Inverter",
+			"category": "systems-equipment"
+		},
+		{
+			"slug": "solar-panels",
+			"name": "Solar Panels",
+			"category": "systems-equipment"
+		},
+		{
+			"slug": "shore-power",
+			"name": "Shore Power",
+			"category": "systems-equipment"
+		},
+		{
+			"slug": "underwater-lights",
+			"name": "Underwater Lights",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "watertight-doors",
+			"name": "Watertight Doors",
+			"category": "stability-safety"
+		},
+		{
+			"slug": "fire-suppression",
+			"name": "Fire Suppression System",
+			"category": "stability-safety"
+		},
+		{
+			"slug": "life-raft",
+			"name": "Life Raft",
+			"category": "stability-safety"
+		},
+		{
+			"slug": "hardtop",
+			"name": "Hardtop",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "swim-platform",
+			"name": "Swim Platform",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "hydraulic-swim-platform",
+			"name": "Hydraulic Swim Platform",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "passerelle",
+			"name": "Passerelle",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "crane",
+			"name": "Crane",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "beach-club",
+			"name": "Beach Club",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "tender-garage",
+			"name": "Tender Garage",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "teak-decks",
+			"name": "Teak Decks",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "bimini",
+			"name": "Bimini",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "barbecue",
+			"name": "Barbecue",
+			"category": "deck-exterior"
+		},
+		{
+			"slug": "heating",
+			"name": "Heating",
+			"category": "comfort-luxury"
+		},
+		{
+			"slug": "swimming-pool",
+			"name": "Swimming Pool",
+			"category": "comfort-luxury"
+		},
+		{
+			"slug": "cinema",
+			"name": "Cinema",
+			"category": "entertainment"
+		},
+		{
+			"slug": "satellite-tv",
+			"name": "Satellite TV",
+			"category": "entertainment"
+		},
+		{
+			"slug": "starlink",
+			"name": "Starlink",
+			"category": "connectivity"
+		},
+		{
+			"slug": "audio-system",
+			"name": "Audio System",
+			"category": "entertainment"
+		}
+	]
+}

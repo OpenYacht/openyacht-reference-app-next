@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openyacht.org/schemas/v1/collection.schema.json",
+  "title": "OpenYacht Listings Collection",
+  "description": "Response envelope of GET /openyacht/v1/listings: a page of listings and tombstones plus sync metadata. The prose spec (spec/api-design.md) is normative; this schema is normative for JSON shape only — on any conflict the prose wins and this schema is defective.",
+  "type": "object",
+  "properties": {
+    "data": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          { "$ref": "listing.schema.json" },
+          { "$ref": "tombstone.schema.json" }
+        ]
+      }
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "next_cursor": {
+          "type": "string",
+          "description": "Opaque pagination cursor. Absent (not null) on the last page — the one deliberate absence in the protocol."
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+        },
+        "protocol_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" }
+      },
+      "required": ["generated_at", "protocol_version"],
+      "patternProperties": { "^x_": true },
+      "additionalProperties": false
+    }
+  },
+  "required": ["data", "meta"],
+  "patternProperties": { "^x_": true },
+  "additionalProperties": false
+}

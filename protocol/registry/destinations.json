@@ -1,0 +1,788 @@
+{
+	"registry": "openyacht-destinations",
+	"version": "2026.08.0",
+	"canonical_url": "https://openyacht.org/registry/destinations.json",
+	"notes": "Fixed charter destination vocabulary for the OpenYacht protocol: the set list both authorities and consumers validate operating_areas[] slugs against. Entries form a hierarchy via 'parent' (a slug in this list, or null for a top-level region); every entry at every level is a valid destination value — a listing operating across a whole group references the group entry. Groupings follow charter-industry convention rather than strict geography. Names are unique across the list so a consumer that does not recognise a slug can fall back to the name. Versioned like tzdata: consumers vendor a copy and update out-of-band; never fetched at request time. Additions via pull request to this repository. This list is intentionally alias-free: mapping messy source values onto these slugs is an import concern belonging to whichever connector reads that source.",
+	"destinations": [
+		{
+			"slug": "mediterranean",
+			"name": "Mediterranean",
+			"parent": null
+		},
+		{
+			"slug": "western-mediterranean",
+			"name": "Western Mediterranean",
+			"parent": "mediterranean"
+		},
+		{
+			"slug": "french-riviera-monaco",
+			"name": "French Riviera & Monaco",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "provence-marseille",
+			"name": "Provence & Marseille",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "corsica",
+			"name": "Corsica",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "sardinia",
+			"name": "Sardinia",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "sicily",
+			"name": "Sicily",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "italian-riviera-north",
+			"name": "Italian Riviera & North",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "amalfi-coast-south-italy",
+			"name": "Amalfi Coast & South Italy",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "balearic-islands",
+			"name": "Balearic Islands",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "catalonia",
+			"name": "Catalonia",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "costa-del-sol",
+			"name": "Costa del Sol",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "canary-islands",
+			"name": "Canary Islands",
+			"parent": "atlantic"
+		},
+		{
+			"slug": "madeira",
+			"name": "Madeira",
+			"parent": "atlantic"
+		},
+		{
+			"slug": "azores",
+			"name": "Azores",
+			"parent": "atlantic"
+		},
+		{
+			"slug": "cape-verde",
+			"name": "Cape Verde",
+			"parent": "atlantic"
+		},
+		{
+			"slug": "portugal",
+			"name": "Portugal",
+			"parent": "atlantic"
+		},
+		{
+			"slug": "malta",
+			"name": "Malta",
+			"parent": "western-mediterranean"
+		},
+		{
+			"slug": "eastern-mediterranean",
+			"name": "Eastern Mediterranean",
+			"parent": "mediterranean"
+		},
+		{
+			"slug": "greece",
+			"name": "Greece",
+			"parent": "eastern-mediterranean"
+		},
+		{
+			"slug": "ionian-islands",
+			"name": "Ionian Islands",
+			"parent": "greece"
+		},
+		{
+			"slug": "cyclades",
+			"name": "Cyclades",
+			"parent": "greece"
+		},
+		{
+			"slug": "dodecanese",
+			"name": "Dodecanese",
+			"parent": "greece"
+		},
+		{
+			"slug": "sporades",
+			"name": "Sporades",
+			"parent": "greece"
+		},
+		{
+			"slug": "crete",
+			"name": "Crete",
+			"parent": "greece"
+		},
+		{
+			"slug": "athens-saronic",
+			"name": "Athens & Saronic",
+			"parent": "greece"
+		},
+		{
+			"slug": "turkey",
+			"name": "Turkey",
+			"parent": "eastern-mediterranean"
+		},
+		{
+			"slug": "cyprus",
+			"name": "Cyprus",
+			"parent": "eastern-mediterranean"
+		},
+		{
+			"slug": "albania",
+			"name": "Albania",
+			"parent": "eastern-mediterranean"
+		},
+		{
+			"slug": "adriatic",
+			"name": "Adriatic",
+			"parent": "mediterranean"
+		},
+		{
+			"slug": "croatia",
+			"name": "Croatia",
+			"parent": "adriatic"
+		},
+		{
+			"slug": "montenegro",
+			"name": "Montenegro",
+			"parent": "adriatic"
+		},
+		{
+			"slug": "slovenia",
+			"name": "Slovenia",
+			"parent": "adriatic"
+		},
+		{
+			"slug": "venice",
+			"name": "Venice",
+			"parent": "adriatic"
+		},
+		{
+			"slug": "caribbean-bahamas",
+			"name": "Caribbean & Bahamas",
+			"parent": null
+		},
+		{
+			"slug": "bahamas",
+			"name": "Bahamas",
+			"parent": "caribbean-bahamas"
+		},
+		{
+			"slug": "virgin-islands",
+			"name": "Virgin Islands",
+			"parent": "caribbean-bahamas"
+		},
+		{
+			"slug": "british-virgin-islands",
+			"name": "British Virgin Islands",
+			"parent": "virgin-islands"
+		},
+		{
+			"slug": "us-virgin-islands",
+			"name": "US Virgin Islands",
+			"parent": "virgin-islands"
+		},
+		{
+			"slug": "leeward-islands",
+			"name": "Leeward Islands",
+			"parent": "caribbean-bahamas"
+		},
+		{
+			"slug": "antigua-barbuda",
+			"name": "Antigua & Barbuda",
+			"parent": "leeward-islands"
+		},
+		{
+			"slug": "st-martin-st-barths",
+			"name": "St Martin & St Barths",
+			"parent": "leeward-islands"
+		},
+		{
+			"slug": "st-kitts-nevis",
+			"name": "St Kitts & Nevis",
+			"parent": "leeward-islands"
+		},
+		{
+			"slug": "anguilla",
+			"name": "Anguilla",
+			"parent": "leeward-islands"
+		},
+		{
+			"slug": "guadeloupe",
+			"name": "Guadeloupe",
+			"parent": "leeward-islands"
+		},
+		{
+			"slug": "windward-islands",
+			"name": "Windward Islands",
+			"parent": "caribbean-bahamas"
+		},
+		{
+			"slug": "st-lucia",
+			"name": "St Lucia",
+			"parent": "windward-islands"
+		},
+		{
+			"slug": "martinique",
+			"name": "Martinique",
+			"parent": "windward-islands"
+		},
+		{
+			"slug": "dominica",
+			"name": "Dominica",
+			"parent": "windward-islands"
+		},
+		{
+			"slug": "st-vincent-grenadines",
+			"name": "St Vincent & the Grenadines",
+			"parent": "windward-islands"
+		},
+		{
+			"slug": "grenada",
+			"name": "Grenada",
+			"parent": "windward-islands"
+		},
+		{
+			"slug": "trinidad-tobago",
+			"name": "Trinidad & Tobago",
+			"parent": "caribbean-bahamas"
+		},
+		{
+			"slug": "greater-antilles",
+			"name": "Greater Antilles",
+			"parent": "caribbean-bahamas"
+		},
+		{
+			"slug": "puerto-rico",
+			"name": "Puerto Rico",
+			"parent": "greater-antilles"
+		},
+		{
+			"slug": "jamaica",
+			"name": "Jamaica",
+			"parent": "greater-antilles"
+		},
+		{
+			"slug": "cuba",
+			"name": "Cuba",
+			"parent": "greater-antilles"
+		},
+		{
+			"slug": "dominican-republic",
+			"name": "Dominican Republic",
+			"parent": "greater-antilles"
+		},
+		{
+			"slug": "bermuda",
+			"name": "Bermuda",
+			"parent": "caribbean-bahamas"
+		},
+		{
+			"slug": "north-america",
+			"name": "North America",
+			"parent": null
+		},
+		{
+			"slug": "us-east-coast",
+			"name": "US East Coast",
+			"parent": "north-america"
+		},
+		{
+			"slug": "florida",
+			"name": "Florida",
+			"parent": "us-east-coast"
+		},
+		{
+			"slug": "new-england",
+			"name": "New England",
+			"parent": "us-east-coast"
+		},
+		{
+			"slug": "chesapeake-bay",
+			"name": "Chesapeake Bay",
+			"parent": "us-east-coast"
+		},
+		{
+			"slug": "us-west-coast",
+			"name": "US West Coast",
+			"parent": "north-america"
+		},
+		{
+			"slug": "california",
+			"name": "California",
+			"parent": "us-west-coast"
+		},
+		{
+			"slug": "pacific-northwest",
+			"name": "Pacific Northwest",
+			"parent": "us-west-coast"
+		},
+		{
+			"slug": "alaska",
+			"name": "Alaska",
+			"parent": "north-america"
+		},
+		{
+			"slug": "great-lakes",
+			"name": "Great Lakes",
+			"parent": "north-america"
+		},
+		{
+			"slug": "canada",
+			"name": "Canada",
+			"parent": "north-america"
+		},
+		{
+			"slug": "canada-east-coast",
+			"name": "Canada East Coast",
+			"parent": "canada"
+		},
+		{
+			"slug": "canada-west-coast",
+			"name": "Canada West Coast",
+			"parent": "canada"
+		},
+		{
+			"slug": "mexico",
+			"name": "Mexico",
+			"parent": "north-america"
+		},
+		{
+			"slug": "mexico-east-coast",
+			"name": "Mexico East Coast",
+			"parent": "mexico"
+		},
+		{
+			"slug": "mexico-west-coast",
+			"name": "Mexico West Coast",
+			"parent": "mexico"
+		},
+		{
+			"slug": "central-america",
+			"name": "Central America",
+			"parent": null
+		},
+		{
+			"slug": "panama",
+			"name": "Panama",
+			"parent": "central-america"
+		},
+		{
+			"slug": "belize",
+			"name": "Belize",
+			"parent": "central-america"
+		},
+		{
+			"slug": "costa-rica",
+			"name": "Costa Rica",
+			"parent": "central-america"
+		},
+		{
+			"slug": "honduras",
+			"name": "Honduras",
+			"parent": "central-america"
+		},
+		{
+			"slug": "nicaragua",
+			"name": "Nicaragua",
+			"parent": "central-america"
+		},
+		{
+			"slug": "south-america",
+			"name": "South America",
+			"parent": null
+		},
+		{
+			"slug": "brazil",
+			"name": "Brazil",
+			"parent": "south-america"
+		},
+		{
+			"slug": "colombia",
+			"name": "Colombia",
+			"parent": "south-america"
+		},
+		{
+			"slug": "argentina",
+			"name": "Argentina",
+			"parent": "south-america"
+		},
+		{
+			"slug": "uruguay",
+			"name": "Uruguay",
+			"parent": "south-america"
+		},
+		{
+			"slug": "chile",
+			"name": "Chile",
+			"parent": "south-america"
+		},
+		{
+			"slug": "peru",
+			"name": "Peru",
+			"parent": "south-america"
+		},
+		{
+			"slug": "ecuador",
+			"name": "Ecuador",
+			"parent": "south-america"
+		},
+		{
+			"slug": "galapagos",
+			"name": "Galapagos",
+			"parent": "south-america"
+		},
+		{
+			"slug": "patagonia",
+			"name": "Patagonia",
+			"parent": "south-america"
+		},
+		{
+			"slug": "northern-europe",
+			"name": "Northern Europe",
+			"parent": null
+		},
+		{
+			"slug": "british-isles",
+			"name": "British Isles",
+			"parent": "northern-europe"
+		},
+		{
+			"slug": "uk-northern-ireland",
+			"name": "UK & Northern Ireland",
+			"parent": "british-isles"
+		},
+		{
+			"slug": "ireland",
+			"name": "Ireland",
+			"parent": "british-isles"
+		},
+		{
+			"slug": "scandinavia",
+			"name": "Scandinavia",
+			"parent": "northern-europe"
+		},
+		{
+			"slug": "norway",
+			"name": "Norway",
+			"parent": "scandinavia"
+		},
+		{
+			"slug": "sweden",
+			"name": "Sweden",
+			"parent": "scandinavia"
+		},
+		{
+			"slug": "denmark",
+			"name": "Denmark",
+			"parent": "scandinavia"
+		},
+		{
+			"slug": "baltic",
+			"name": "Baltic",
+			"parent": "northern-europe"
+		},
+		{
+			"slug": "finland",
+			"name": "Finland",
+			"parent": "baltic"
+		},
+		{
+			"slug": "russia",
+			"name": "Russia",
+			"parent": "baltic"
+		},
+		{
+			"slug": "north-atlantic",
+			"name": "Iceland & Greenland",
+			"parent": "northern-europe"
+		},
+		{
+			"slug": "iceland",
+			"name": "Iceland",
+			"parent": "north-atlantic"
+		},
+		{
+			"slug": "greenland",
+			"name": "Greenland",
+			"parent": "north-atlantic"
+		},
+		{
+			"slug": "netherlands",
+			"name": "Netherlands",
+			"parent": "northern-europe"
+		},
+		{
+			"slug": "southeast-asia",
+			"name": "Southeast Asia",
+			"parent": null
+		},
+		{
+			"slug": "thailand",
+			"name": "Thailand",
+			"parent": "southeast-asia"
+		},
+		{
+			"slug": "gulf-of-thailand",
+			"name": "Gulf of Thailand",
+			"parent": "thailand"
+		},
+		{
+			"slug": "andaman-sea",
+			"name": "Andaman Sea",
+			"parent": "thailand"
+		},
+		{
+			"slug": "indonesia",
+			"name": "Indonesia",
+			"parent": "southeast-asia"
+		},
+		{
+			"slug": "bali",
+			"name": "Bali",
+			"parent": "indonesia"
+		},
+		{
+			"slug": "komodo",
+			"name": "Komodo",
+			"parent": "indonesia"
+		},
+		{
+			"slug": "raja-ampat",
+			"name": "Raja Ampat",
+			"parent": "indonesia"
+		},
+		{
+			"slug": "malaysia",
+			"name": "Malaysia",
+			"parent": "southeast-asia"
+		},
+		{
+			"slug": "singapore",
+			"name": "Singapore",
+			"parent": "southeast-asia"
+		},
+		{
+			"slug": "vietnam",
+			"name": "Vietnam",
+			"parent": "southeast-asia"
+		},
+		{
+			"slug": "myanmar",
+			"name": "Myanmar",
+			"parent": "southeast-asia"
+		},
+		{
+			"slug": "philippines",
+			"name": "Philippines",
+			"parent": "southeast-asia"
+		},
+		{
+			"slug": "hong-kong",
+			"name": "Hong Kong",
+			"parent": "east-asia"
+		},
+		{
+			"slug": "taiwan",
+			"name": "Taiwan",
+			"parent": "east-asia"
+		},
+		{
+			"slug": "east-asia",
+			"name": "East Asia",
+			"parent": null
+		},
+		{
+			"slug": "japan",
+			"name": "Japan",
+			"parent": "east-asia"
+		},
+		{
+			"slug": "indian-ocean",
+			"name": "Indian Ocean",
+			"parent": null
+		},
+		{
+			"slug": "maldives",
+			"name": "Maldives",
+			"parent": "indian-ocean"
+		},
+		{
+			"slug": "seychelles",
+			"name": "Seychelles",
+			"parent": "indian-ocean"
+		},
+		{
+			"slug": "mauritius",
+			"name": "Mauritius",
+			"parent": "indian-ocean"
+		},
+		{
+			"slug": "reunion",
+			"name": "Reunion",
+			"parent": "indian-ocean"
+		},
+		{
+			"slug": "madagascar",
+			"name": "Madagascar",
+			"parent": "indian-ocean"
+		},
+		{
+			"slug": "pacific",
+			"name": "Pacific",
+			"parent": null
+		},
+		{
+			"slug": "south-pacific",
+			"name": "South Pacific",
+			"parent": "pacific"
+		},
+		{
+			"slug": "fiji",
+			"name": "Fiji",
+			"parent": "south-pacific"
+		},
+		{
+			"slug": "french-polynesia",
+			"name": "French Polynesia",
+			"parent": "south-pacific"
+		},
+		{
+			"slug": "tonga",
+			"name": "Tonga",
+			"parent": "south-pacific"
+		},
+		{
+			"slug": "vanuatu",
+			"name": "Vanuatu",
+			"parent": "south-pacific"
+		},
+		{
+			"slug": "new-caledonia",
+			"name": "New Caledonia",
+			"parent": "south-pacific"
+		},
+		{
+			"slug": "papua-new-guinea",
+			"name": "Papua New Guinea",
+			"parent": "south-pacific"
+		},
+		{
+			"slug": "solomon-islands",
+			"name": "Solomon Islands",
+			"parent": "south-pacific"
+		},
+		{
+			"slug": "palau",
+			"name": "Palau",
+			"parent": "south-pacific"
+		},
+		{
+			"slug": "hawaii",
+			"name": "Hawaii",
+			"parent": "pacific"
+		},
+		{
+			"slug": "middle-east",
+			"name": "Middle East",
+			"parent": null
+		},
+		{
+			"slug": "arabian-gulf",
+			"name": "Arabian Gulf",
+			"parent": "middle-east"
+		},
+		{
+			"slug": "dubai",
+			"name": "Dubai",
+			"parent": "arabian-gulf"
+		},
+		{
+			"slug": "abu-dhabi",
+			"name": "Abu Dhabi",
+			"parent": "arabian-gulf"
+		},
+		{
+			"slug": "red-sea",
+			"name": "Red Sea",
+			"parent": "middle-east"
+		},
+		{
+			"slug": "australia-new-zealand",
+			"name": "Australia & New Zealand",
+			"parent": null
+		},
+		{
+			"slug": "australia",
+			"name": "Australia",
+			"parent": "australia-new-zealand"
+		},
+		{
+			"slug": "east-coast-great-barrier-reef",
+			"name": "East Coast & Great Barrier Reef",
+			"parent": "australia"
+		},
+		{
+			"slug": "west-coast-kimberley",
+			"name": "West Coast & Kimberley",
+			"parent": "australia"
+		},
+		{
+			"slug": "new-zealand",
+			"name": "New Zealand",
+			"parent": "australia-new-zealand"
+		},
+		{
+			"slug": "africa",
+			"name": "Africa",
+			"parent": null
+		},
+		{
+			"slug": "south-africa",
+			"name": "South Africa",
+			"parent": "africa"
+		},
+		{
+			"slug": "polar",
+			"name": "Polar",
+			"parent": null
+		},
+		{
+			"slug": "arctic",
+			"name": "Arctic",
+			"parent": "polar"
+		},
+		{
+			"slug": "spitsbergen-svalbard",
+			"name": "Spitsbergen / Svalbard",
+			"parent": "arctic"
+		},
+		{
+			"slug": "antarctica",
+			"name": "Antarctica",
+			"parent": "polar"
+		},
+		{
+			"slug": "atlantic",
+			"name": "Atlantic",
+			"parent": null
+		}
+	]
+}

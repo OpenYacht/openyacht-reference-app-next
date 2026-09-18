@@ -1,0 +1,12 @@
+{
+  "protocol_versions": ["1.0"],
+  "features": {
+    "subscriptions": true,
+    "charter_listings": true,
+    "media_hashes": true
+  },
+  "limits": {
+    "page_size_max": 100,
+    "rate_per_hour": 500
+  }
+}

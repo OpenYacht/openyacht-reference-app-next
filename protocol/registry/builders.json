@@ -1,0 +1,1913 @@
+{
+	"registry": "openyacht-builders",
+	"version": "2026.09.0",
+	"canonical_url": "https://openyacht.org/registry/builders.json",
+	"notes": "Fixed manufacturer vocabulary for the OpenYacht protocol: the set list both authorities and consumers validate builder slugs against. Versioned like tzdata: consumers vendor a copy and update out-of-band; never fetched at request time. Additions via pull request to the spec repository. This list is intentionally alias-free — normalising dirty source data is an import concern; alias mappings are a non-normative import aid maintained outside this repository.",
+	"builders": [
+		{
+			"slug": "ab-inflatables",
+			"name": "AB Inflatables",
+			"country": "France"
+		},
+		{
+			"slug": "abeking-rasmussen",
+			"name": "Abeking & Rasmussen",
+			"country": "Germany"
+		},
+		{
+			"slug": "absolute",
+			"name": "Absolute",
+			"country": "Italy"
+		},
+		{
+			"slug": "admiral",
+			"name": "Admiral",
+			"country": "Italy"
+		},
+		{
+			"slug": "admiral-marine",
+			"name": "Admiral Marine",
+			"country": "United States"
+		},
+		{
+			"slug": "aegean-yachts",
+			"name": "Aegean Yachts",
+			"country": "Turkey"
+		},
+		{
+			"slug": "aicon",
+			"name": "Aicon",
+			"country": "Italy"
+		},
+		{
+			"slug": "albemarle",
+			"name": "Albemarle",
+			"country": "United States"
+		},
+		{
+			"slug": "albin",
+			"name": "Albin",
+			"country": "Sweden"
+		},
+		{
+			"slug": "alerion",
+			"name": "Alerion",
+			"country": null
+		},
+		{
+			"slug": "alloy-yachts",
+			"name": "Alloy Yachts",
+			"country": "New Zealand"
+		},
+		{
+			"slug": "amel",
+			"name": "Amel",
+			"country": "France"
+		},
+		{
+			"slug": "amels",
+			"name": "Amels",
+			"country": "Netherlands"
+		},
+		{
+			"slug": "amer",
+			"name": "Amer",
+			"country": "Italy"
+		},
+		{
+			"slug": "american-tug",
+			"name": "American Tug",
+			"country": "United States"
+		},
+		{
+			"slug": "anastassiades-tsortanides",
+			"name": "Anastassiades & Tsortanides",
+			"country": "Greece"
+		},
+		{
+			"slug": "apreamare",
+			"name": "Apreamare",
+			"country": "Italy"
+		},
+		{
+			"slug": "aquila",
+			"name": "Aquila",
+			"country": "South Africa"
+		},
+		{
+			"slug": "arcadia",
+			"name": "Arcadia",
+			"country": "Italy"
+		},
+		{
+			"slug": "astondoa",
+			"name": "Astondoa",
+			"country": "Spain"
+		},
+		{
+			"slug": "austin-parker",
+			"name": "Austin Parker",
+			"country": "Italy"
+		},
+		{
+			"slug": "avalon",
+			"name": "Avalon",
+			"country": "United States"
+		},
+		{
+			"slug": "aviara",
+			"name": "Aviara",
+			"country": null
+		},
+		{
+			"slug": "axis",
+			"name": "Axis",
+			"country": null
+		},
+		{
+			"slug": "axopar",
+			"name": "Axopar",
+			"country": "Finland"
+		},
+		{
+			"slug": "azimut",
+			"name": "Azimut",
+			"country": "Italy"
+		},
+		{
+			"slug": "back-cove",
+			"name": "Back Cove",
+			"country": null
+		},
+		{
+			"slug": "baglietto",
+			"name": "Baglietto",
+			"country": null
+		},
+		{
+			"slug": "bahama",
+			"name": "Bahama",
+			"country": null
+		},
+		{
+			"slug": "bali",
+			"name": "Bali",
+			"country": "France"
+		},
+		{
+			"slug": "barker-boatworks",
+			"name": "Barker Boatworks",
+			"country": null
+		},
+		{
+			"slug": "bavaria",
+			"name": "Bavaria",
+			"country": null
+		},
+		{
+			"slug": "bayliner",
+			"name": "Bayliner",
+			"country": "United States"
+		},
+		{
+			"slug": "beneteau",
+			"name": "Beneteau",
+			"country": "France"
+		},
+		{
+			"slug": "benetti",
+			"name": "Benetti",
+			"country": null
+		},
+		{
+			"slug": "bennington",
+			"name": "Bennington",
+			"country": null
+		},
+		{
+			"slug": "bertram",
+			"name": "Bertram",
+			"country": "United States"
+		},
+		{
+			"slug": "bilgin",
+			"name": "Bilgin",
+			"country": null
+		},
+		{
+			"slug": "black-pepper",
+			"name": "Black Pepper",
+			"country": null
+		},
+		{
+			"slug": "blackfin",
+			"name": "Blackfin",
+			"country": null
+		},
+		{
+			"slug": "blackwater",
+			"name": "BlackWater",
+			"country": null
+		},
+		{
+			"slug": "blackwell",
+			"name": "Blackwell",
+			"country": null
+		},
+		{
+			"slug": "blazer",
+			"name": "Blazer",
+			"country": null
+		},
+		{
+			"slug": "blue-wave",
+			"name": "Blue Wave",
+			"country": null
+		},
+		{
+			"slug": "bluegame",
+			"name": "Bluegame",
+			"country": null
+		},
+		{
+			"slug": "bluewater",
+			"name": "Bluewater",
+			"country": null
+		},
+		{
+			"slug": "boston-whaler",
+			"name": "Boston Whaler",
+			"country": "United States"
+		},
+		{
+			"slug": "brabus",
+			"name": "Brabus",
+			"country": null
+		},
+		{
+			"slug": "bristol",
+			"name": "Bristol",
+			"country": null
+		},
+		{
+			"slug": "broward",
+			"name": "Broward",
+			"country": "United States"
+		},
+		{
+			"slug": "bruckmann",
+			"name": "Bruckmann",
+			"country": "Canada"
+		},
+		{
+			"slug": "buddy-davis",
+			"name": "Buddy Davis",
+			"country": null
+		},
+		{
+			"slug": "burger",
+			"name": "Burger",
+			"country": "United States"
+		},
+		{
+			"slug": "cabo",
+			"name": "Cabo",
+			"country": null
+		},
+		{
+			"slug": "cal",
+			"name": "CAL",
+			"country": null
+		},
+		{
+			"slug": "caliber",
+			"name": "Caliber",
+			"country": null
+		},
+		{
+			"slug": "californian",
+			"name": "Californian",
+			"country": null
+		},
+		{
+			"slug": "canados",
+			"name": "Canados",
+			"country": "Italy"
+		},
+		{
+			"slug": "cape-dory",
+			"name": "Cape Dory",
+			"country": null
+		},
+		{
+			"slug": "cape-horn",
+			"name": "Cape Horn",
+			"country": null
+		},
+		{
+			"slug": "carolina-classic",
+			"name": "Carolina Classic",
+			"country": null
+		},
+		{
+			"slug": "carolina-skiff",
+			"name": "Carolina Skiff",
+			"country": null
+		},
+		{
+			"slug": "carroll",
+			"name": "Carroll",
+			"country": null
+		},
+		{
+			"slug": "carver",
+			"name": "Carver",
+			"country": "United States"
+		},
+		{
+			"slug": "catalina",
+			"name": "Catalina",
+			"country": "United States"
+		},
+		{
+			"slug": "caterpillar",
+			"name": "Caterpillar",
+			"country": "United States"
+		},
+		{
+			"slug": "caymas",
+			"name": "Caymas",
+			"country": null
+		},
+		{
+			"slug": "cc-yachts",
+			"name": "CC Yachts",
+			"country": null
+		},
+		{
+			"slug": "century",
+			"name": "Century",
+			"country": null
+		},
+		{
+			"slug": "ch-marine",
+			"name": "CH Marine",
+			"country": null
+		},
+		{
+			"slug": "chaparral",
+			"name": "Chaparral",
+			"country": null
+		},
+		{
+			"slug": "cheoy-lee",
+			"name": "Cheoy Lee",
+			"country": "Hong Kong"
+		},
+		{
+			"slug": "cherubini",
+			"name": "Cherubini",
+			"country": null
+		},
+		{
+			"slug": "chris-craft",
+			"name": "Chris-Craft",
+			"country": "United States"
+		},
+		{
+			"slug": "christensen",
+			"name": "Christensen",
+			"country": "United States"
+		},
+		{
+			"slug": "cigarette",
+			"name": "Cigarette",
+			"country": null
+		},
+		{
+			"slug": "cl-yachts",
+			"name": "CL Yachts",
+			"country": null
+		},
+		{
+			"slug": "cobalt",
+			"name": "Cobalt",
+			"country": "United States"
+		},
+		{
+			"slug": "cobia",
+			"name": "Cobia",
+			"country": null
+		},
+		{
+			"slug": "codecasa",
+			"name": "Codecasa",
+			"country": null
+		},
+		{
+			"slug": "concept",
+			"name": "Concept",
+			"country": null
+		},
+		{
+			"slug": "conrad",
+			"name": "Conrad",
+			"country": null
+		},
+		{
+			"slug": "contender",
+			"name": "Contender",
+			"country": null
+		},
+		{
+			"slug": "cranchi",
+			"name": "Cranchi",
+			"country": "Italy"
+		},
+		{
+			"slug": "crescent",
+			"name": "Crescent",
+			"country": "Canada"
+		},
+		{
+			"slug": "crn",
+			"name": "CRN",
+			"country": "Italy"
+		},
+		{
+			"slug": "crownline",
+			"name": "Crownline",
+			"country": null
+		},
+		{
+			"slug": "cruisers-yachts",
+			"name": "Cruisers Yachts",
+			"country": null
+		},
+		{
+			"slug": "custom-line",
+			"name": "Custom Line",
+			"country": "Italy"
+		},
+		{
+			"slug": "cutwater",
+			"name": "Cutwater",
+			"country": null
+		},
+		{
+			"slug": "damen",
+			"name": "Damen",
+			"country": "Netherlands"
+		},
+		{
+			"slug": "de-antonio",
+			"name": "De Antonio",
+			"country": null
+		},
+		{
+			"slug": "defever",
+			"name": "DeFever",
+			"country": "United States"
+		},
+		{
+			"slug": "dehler",
+			"name": "Dehler",
+			"country": "Germany"
+		},
+		{
+			"slug": "delta-marine",
+			"name": "Delta Marine",
+			"country": "United States"
+		},
+		{
+			"slug": "destiny",
+			"name": "Destiny",
+			"country": null
+		},
+		{
+			"slug": "donzi",
+			"name": "Donzi",
+			"country": null
+		},
+		{
+			"slug": "duffy",
+			"name": "Duffy",
+			"country": null
+		},
+		{
+			"slug": "dufour",
+			"name": "Dufour",
+			"country": "France"
+		},
+		{
+			"slug": "dyer",
+			"name": "Dyer",
+			"country": "United States"
+		},
+		{
+			"slug": "dynamiq",
+			"name": "Dynamiq",
+			"country": "Monaco"
+		},
+		{
+			"slug": "e-sailing-yachts",
+			"name": "e Sailing Yachts",
+			"country": null
+		},
+		{
+			"slug": "east-passage-boatwrights",
+			"name": "East Passage Boatwrights",
+			"country": null
+		},
+		{
+			"slug": "eastern",
+			"name": "Eastern",
+			"country": null
+		},
+		{
+			"slug": "eclipse",
+			"name": "Eclipse",
+			"country": null
+		},
+		{
+			"slug": "edgewater",
+			"name": "Edgewater",
+			"country": null
+		},
+		{
+			"slug": "egg-harbor",
+			"name": "Egg Harbor",
+			"country": null
+		},
+		{
+			"slug": "elan",
+			"name": "Elan",
+			"country": "Slovenia"
+		},
+		{
+			"slug": "endeavour",
+			"name": "Endeavour",
+			"country": null
+		},
+		{
+			"slug": "ericson",
+			"name": "Ericson",
+			"country": null
+		},
+		{
+			"slug": "everglades",
+			"name": "Everglades",
+			"country": null
+		},
+		{
+			"slug": "excess",
+			"name": "Excess",
+			"country": null
+		},
+		{
+			"slug": "extra-yachts",
+			"name": "Extra Yachts",
+			"country": null
+		},
+		{
+			"slug": "fairline",
+			"name": "Fairline",
+			"country": "United Kingdom"
+		},
+		{
+			"slug": "farr",
+			"name": "Farr",
+			"country": null
+		},
+		{
+			"slug": "feadship",
+			"name": "Feadship",
+			"country": "Netherlands"
+		},
+		{
+			"slug": "ferretti",
+			"name": "Ferretti",
+			"country": "Italy"
+		},
+		{
+			"slug": "filippetti",
+			"name": "Filippetti",
+			"country": null
+		},
+		{
+			"slug": "fishing-raptor",
+			"name": "Fishing Raptor",
+			"country": null
+		},
+		{
+			"slug": "fjord",
+			"name": "Fjord",
+			"country": "Germany"
+		},
+		{
+			"slug": "fleming",
+			"name": "Fleming",
+			"country": "United States"
+		},
+		{
+			"slug": "formula",
+			"name": "Formula",
+			"country": "United States"
+		},
+		{
+			"slug": "fountain",
+			"name": "Fountain",
+			"country": null
+		},
+		{
+			"slug": "fountaine-pajot",
+			"name": "Fountaine Pajot",
+			"country": "France"
+		},
+		{
+			"slug": "four-winns",
+			"name": "Four Winns",
+			"country": null
+		},
+		{
+			"slug": "freedom",
+			"name": "Freedom",
+			"country": null
+		},
+		{
+			"slug": "freeman",
+			"name": "Freeman",
+			"country": null
+		},
+		{
+			"slug": "front-runner",
+			"name": "Front Runner",
+			"country": null
+		},
+		{
+			"slug": "fs-boatworks",
+			"name": "FS Boatworks",
+			"country": null
+		},
+		{
+			"slug": "galeon",
+			"name": "Galeon",
+			"country": "Poland"
+		},
+		{
+			"slug": "garnet-offshore",
+			"name": "Garnet Offshore",
+			"country": null
+		},
+		{
+			"slug": "gozzard",
+			"name": "Gozzard",
+			"country": null
+		},
+		{
+			"slug": "grady-white",
+			"name": "Grady-White",
+			"country": "United States"
+		},
+		{
+			"slug": "grand-alaskan",
+			"name": "Grand Alaskan",
+			"country": null
+		},
+		{
+			"slug": "grand-banks",
+			"name": "Grand Banks",
+			"country": "Singapore"
+		},
+		{
+			"slug": "grand-soleil",
+			"name": "Grand Soleil",
+			"country": null
+		},
+		{
+			"slug": "greenline",
+			"name": "Greenline",
+			"country": null
+		},
+		{
+			"slug": "gulf-craft",
+			"name": "Gulf Craft",
+			"country": "United Arab Emirates"
+		},
+		{
+			"slug": "gulfstar",
+			"name": "Gulfstar",
+			"country": null
+		},
+		{
+			"slug": "gunboat",
+			"name": "Gunboat",
+			"country": null
+		},
+		{
+			"slug": "hallberg-rassy",
+			"name": "Hallberg-Rassy",
+			"country": null
+		},
+		{
+			"slug": "hampton",
+			"name": "Hampton",
+			"country": null
+		},
+		{
+			"slug": "hans-christian",
+			"name": "Hans Christian",
+			"country": null
+		},
+		{
+			"slug": "hanse",
+			"name": "Hanse",
+			"country": "Germany"
+		},
+		{
+			"slug": "hargrave",
+			"name": "Hargrave",
+			"country": null
+		},
+		{
+			"slug": "hatteras",
+			"name": "Hatteras",
+			"country": "United States"
+		},
+		{
+			"slug": "hcb",
+			"name": "HCB",
+			"country": null
+		},
+		{
+			"slug": "heesen",
+			"name": "Heesen",
+			"country": "Netherlands"
+		},
+		{
+			"slug": "heritage-east",
+			"name": "Heritage East",
+			"country": null
+		},
+		{
+			"slug": "herreshoff",
+			"name": "Herreshoff",
+			"country": null
+		},
+		{
+			"slug": "hershine",
+			"name": "Hershine",
+			"country": null
+		},
+		{
+			"slug": "highfield",
+			"name": "Highfield",
+			"country": null
+		},
+		{
+			"slug": "hinckley",
+			"name": "Hinckley",
+			"country": "United States"
+		},
+		{
+			"slug": "horizon",
+			"name": "Horizon",
+			"country": "Taiwan"
+		},
+		{
+			"slug": "huckins",
+			"name": "Huckins",
+			"country": null
+		},
+		{
+			"slug": "hunt-yachts",
+			"name": "Hunt Yachts",
+			"country": null
+		},
+		{
+			"slug": "hunter",
+			"name": "Hunter",
+			"country": "United States"
+		},
+		{
+			"slug": "hurricane",
+			"name": "Hurricane",
+			"country": null
+		},
+		{
+			"slug": "hydra-sports",
+			"name": "Hydra-Sports",
+			"country": null
+		},
+		{
+			"slug": "hylas",
+			"name": "Hylas",
+			"country": null
+		},
+		{
+			"slug": "iguana",
+			"name": "Iguana",
+			"country": null
+		},
+		{
+			"slug": "iliad-catamarans",
+			"name": "ILIAD Catamarans",
+			"country": null
+		},
+		{
+			"slug": "inace",
+			"name": "Inace",
+			"country": null
+		},
+		{
+			"slug": "intrepid",
+			"name": "Intrepid",
+			"country": null
+		},
+		{
+			"slug": "invictus",
+			"name": "Invictus",
+			"country": "Italy"
+		},
+		{
+			"slug": "invincible",
+			"name": "Invincible",
+			"country": "United States"
+		},
+		{
+			"slug": "isa-yachts",
+			"name": "ISA Yachts",
+			"country": null
+		},
+		{
+			"slug": "island-packet",
+			"name": "Island Packet",
+			"country": "United States"
+		},
+		{
+			"slug": "islander",
+			"name": "Islander",
+			"country": null
+		},
+		{
+			"slug": "italcraft",
+			"name": "Italcraft",
+			"country": "Italy"
+		},
+		{
+			"slug": "itama",
+			"name": "Itama",
+			"country": "Italy"
+		},
+		{
+			"slug": "j-boats",
+			"name": "J Boats",
+			"country": "United States"
+		},
+		{
+			"slug": "jarvis-newman",
+			"name": "Jarvis Newman",
+			"country": null
+		},
+		{
+			"slug": "jeanneau",
+			"name": "Jeanneau",
+			"country": "France"
+		},
+		{
+			"slug": "jefferson",
+			"name": "Jefferson",
+			"country": null
+		},
+		{
+			"slug": "jfa",
+			"name": "JFA",
+			"country": null
+		},
+		{
+			"slug": "jim-smith",
+			"name": "Jim Smith",
+			"country": null
+		},
+		{
+			"slug": "johnson-yachts",
+			"name": "Johnson Yachts",
+			"country": null
+		},
+		{
+			"slug": "jupiter",
+			"name": "Jupiter",
+			"country": null
+		},
+		{
+			"slug": "kadey-krogen",
+			"name": "Kadey-Krogen",
+			"country": null
+		},
+		{
+			"slug": "key-west",
+			"name": "Key West",
+			"country": null
+		},
+		{
+			"slug": "lagoon",
+			"name": "Lagoon",
+			"country": "France"
+		},
+		{
+			"slug": "larson",
+			"name": "Larson",
+			"country": null
+		},
+		{
+			"slug": "latitude-tournament-boats",
+			"name": "Latitude Tournament Boats",
+			"country": null
+		},
+		{
+			"slug": "lazzara",
+			"name": "Lazzara",
+			"country": "United States"
+		},
+		{
+			"slug": "lecomte",
+			"name": "LeComte",
+			"country": null
+		},
+		{
+			"slug": "leeuwin",
+			"name": "Leeuwin",
+			"country": null
+		},
+		{
+			"slug": "legacy",
+			"name": "Legacy",
+			"country": null
+		},
+		{
+			"slug": "lekker",
+			"name": "Lekker",
+			"country": null
+		},
+		{
+			"slug": "leopard",
+			"name": "Leopard",
+			"country": "South Africa"
+		},
+		{
+			"slug": "lien-hwa",
+			"name": "Lien Hwa",
+			"country": null
+		},
+		{
+			"slug": "little-harbor",
+			"name": "Little Harbor",
+			"country": null
+		},
+		{
+			"slug": "luhrs",
+			"name": "Luhrs",
+			"country": null
+		},
+		{
+			"slug": "lurssen",
+			"name": "Lürssen",
+			"country": "Germany"
+		},
+		{
+			"slug": "lyman",
+			"name": "Lyman",
+			"country": null
+		},
+		{
+			"slug": "lyman-morse",
+			"name": "Lyman-Morse",
+			"country": null
+		},
+		{
+			"slug": "magellano",
+			"name": "Magellano",
+			"country": "Italy"
+		},
+		{
+			"slug": "magnum",
+			"name": "Magnum",
+			"country": null
+		},
+		{
+			"slug": "mainship",
+			"name": "Mainship",
+			"country": null
+		},
+		{
+			"slug": "maiora",
+			"name": "Maiora",
+			"country": null
+		},
+		{
+			"slug": "mako",
+			"name": "Mako",
+			"country": null
+		},
+		{
+			"slug": "malibu",
+			"name": "Malibu",
+			"country": null
+		},
+		{
+			"slug": "mangusta",
+			"name": "Mangusta",
+			"country": "Italy"
+		},
+		{
+			"slug": "manta",
+			"name": "Manta",
+			"country": null
+		},
+		{
+			"slug": "maori-yacht",
+			"name": "Maori Yacht",
+			"country": null
+		},
+		{
+			"slug": "marex",
+			"name": "Marex",
+			"country": null
+		},
+		{
+			"slug": "marine-trader",
+			"name": "Marine Trader",
+			"country": null
+		},
+		{
+			"slug": "maritimo",
+			"name": "Maritimo",
+			"country": "Australia"
+		},
+		{
+			"slug": "marlago",
+			"name": "Marlago",
+			"country": null
+		},
+		{
+			"slug": "marlow",
+			"name": "Marlow",
+			"country": null
+		},
+		{
+			"slug": "marquis",
+			"name": "Marquis",
+			"country": null
+		},
+		{
+			"slug": "mastercraft",
+			"name": "Mastercraft",
+			"country": null
+		},
+		{
+			"slug": "maxum",
+			"name": "Maxum",
+			"country": null
+		},
+		{
+			"slug": "mazu-yachts",
+			"name": "Mazu Yachts",
+			"country": null
+		},
+		{
+			"slug": "mcconaghy-boats",
+			"name": "McConaghy Boats",
+			"country": null
+		},
+		{
+			"slug": "mediterranean",
+			"name": "Mediterranean",
+			"country": null
+		},
+		{
+			"slug": "meridian",
+			"name": "Meridian",
+			"country": null
+		},
+		{
+			"slug": "merritt",
+			"name": "Merritt",
+			"country": null
+		},
+		{
+			"slug": "metalcraft",
+			"name": "MetalCraft",
+			"country": "Canada"
+		},
+		{
+			"slug": "midnight-express",
+			"name": "Midnight Express",
+			"country": null
+		},
+		{
+			"slug": "mjm",
+			"name": "MJM",
+			"country": "United States"
+		},
+		{
+			"slug": "monk",
+			"name": "Monk",
+			"country": null
+		},
+		{
+			"slug": "monte-carlo-yachts",
+			"name": "Monte Carlo Yachts",
+			"country": "Italy"
+		},
+		{
+			"slug": "monterey",
+			"name": "Monterey",
+			"country": null
+		},
+		{
+			"slug": "moomba",
+			"name": "Moomba",
+			"country": null
+		},
+		{
+			"slug": "morgan",
+			"name": "Morgan",
+			"country": null
+		},
+		{
+			"slug": "nauticstar",
+			"name": "NauticStar",
+			"country": null
+		},
+		{
+			"slug": "nautique",
+			"name": "Nautique",
+			"country": null
+		},
+		{
+			"slug": "nautor-swan",
+			"name": "Nautor Swan",
+			"country": "Finland"
+		},
+		{
+			"slug": "navigator",
+			"name": "Navigator",
+			"country": null
+		},
+		{
+			"slug": "neptunus",
+			"name": "Neptunus",
+			"country": "Netherlands"
+		},
+		{
+			"slug": "new-england-boatworks",
+			"name": "New England Boatworks",
+			"country": "United States"
+		},
+		{
+			"slug": "new-harbor-boats",
+			"name": "New Harbor Boats",
+			"country": null
+		},
+		{
+			"slug": "nimbus",
+			"name": "Nimbus",
+			"country": null
+		},
+		{
+			"slug": "nobiskrug",
+			"name": "Nobiskrug",
+			"country": "Germany"
+		},
+		{
+			"slug": "nonsuch",
+			"name": "Nonsuch",
+			"country": null
+		},
+		{
+			"slug": "nor-tech",
+			"name": "Nor-Tech",
+			"country": null
+		},
+		{
+			"slug": "nordhavn",
+			"name": "Nordhavn",
+			"country": "United States"
+		},
+		{
+			"slug": "nordic-tugs",
+			"name": "Nordic Tugs",
+			"country": "United States"
+		},
+		{
+			"slug": "nordlund",
+			"name": "Nordlund",
+			"country": null
+		},
+		{
+			"slug": "norseman",
+			"name": "Norseman",
+			"country": null
+		},
+		{
+			"slug": "northern-bay",
+			"name": "Northern Bay",
+			"country": null
+		},
+		{
+			"slug": "northstar",
+			"name": "Northstar",
+			"country": null
+		},
+		{
+			"slug": "novurania",
+			"name": "Novurania",
+			"country": null
+		},
+		{
+			"slug": "numarine",
+			"name": "Numarine",
+			"country": null
+		},
+		{
+			"slug": "nx-boats",
+			"name": "NX Boats",
+			"country": null
+		},
+		{
+			"slug": "o-day",
+			"name": "O'Day",
+			"country": null
+		},
+		{
+			"slug": "ocean-alexander",
+			"name": "Ocean Alexander",
+			"country": "Taiwan"
+		},
+		{
+			"slug": "ocean-king",
+			"name": "Ocean King",
+			"country": null
+		},
+		{
+			"slug": "ocean-master",
+			"name": "Ocean Master",
+			"country": null
+		},
+		{
+			"slug": "ocean-yachts",
+			"name": "Ocean Yachts",
+			"country": null
+		},
+		{
+			"slug": "oceanco",
+			"name": "Oceanco",
+			"country": "Netherlands"
+		},
+		{
+			"slug": "offshore-yachts",
+			"name": "Offshore Yachts",
+			"country": null
+		},
+		{
+			"slug": "onslow-bay",
+			"name": "Onslow Bay",
+			"country": null
+		},
+		{
+			"slug": "oryx",
+			"name": "Oryx",
+			"country": null
+		},
+		{
+			"slug": "out-island",
+			"name": "Out Island",
+			"country": null
+		},
+		{
+			"slug": "outbound",
+			"name": "Outbound",
+			"country": null
+		},
+		{
+			"slug": "outer-reef-yachts",
+			"name": "Outer Reef Yachts",
+			"country": "United States"
+		},
+		{
+			"slug": "outremer",
+			"name": "Outremer",
+			"country": null
+		},
+		{
+			"slug": "oyster",
+			"name": "Oyster",
+			"country": "United Kingdom"
+		},
+		{
+			"slug": "pacific-mariner",
+			"name": "Pacific Mariner",
+			"country": "United States"
+		},
+		{
+			"slug": "pacific-seacraft",
+			"name": "Pacific Seacraft",
+			"country": null
+		},
+		{
+			"slug": "palm-beach-motor-yachts",
+			"name": "Palm Beach Motor Yachts",
+			"country": "Australia"
+		},
+		{
+			"slug": "palmer-johnson",
+			"name": "Palmer Johnson",
+			"country": "United States"
+		},
+		{
+			"slug": "pardo-yachts",
+			"name": "Pardo Yachts",
+			"country": null
+		},
+		{
+			"slug": "parker",
+			"name": "Parker",
+			"country": null
+		},
+		{
+			"slug": "passport",
+			"name": "Passport",
+			"country": "United States"
+		},
+		{
+			"slug": "pathfinder",
+			"name": "Pathfinder",
+			"country": null
+		},
+		{
+			"slug": "pearl-yachts",
+			"name": "Pearl Yachts",
+			"country": null
+		},
+		{
+			"slug": "pearson",
+			"name": "Pearson",
+			"country": null
+		},
+		{
+			"slug": "pendennis",
+			"name": "Pendennis",
+			"country": "United Kingdom"
+		},
+		{
+			"slug": "pershing",
+			"name": "Pershing",
+			"country": "Italy"
+		},
+		{
+			"slug": "post",
+			"name": "Post",
+			"country": null
+		},
+		{
+			"slug": "powercat",
+			"name": "Powercat",
+			"country": null
+		},
+		{
+			"slug": "president",
+			"name": "President",
+			"country": null
+		},
+		{
+			"slug": "prestige",
+			"name": "Prestige",
+			"country": "France"
+		},
+		{
+			"slug": "princess",
+			"name": "Princess",
+			"country": "United Kingdom"
+		},
+		{
+			"slug": "pro-line",
+			"name": "Pro-Line",
+			"country": null
+		},
+		{
+			"slug": "protector",
+			"name": "Protector",
+			"country": null
+		},
+		{
+			"slug": "pursuit",
+			"name": "Pursuit",
+			"country": null
+		},
+		{
+			"slug": "queenship",
+			"name": "Queenship",
+			"country": null
+		},
+		{
+			"slug": "rampage",
+			"name": "Rampage",
+			"country": null
+		},
+		{
+			"slug": "rand",
+			"name": "Rand",
+			"country": "Denmark"
+		},
+		{
+			"slug": "ranger",
+			"name": "Ranger",
+			"country": null
+		},
+		{
+			"slug": "ranger-tugs",
+			"name": "Ranger Tugs",
+			"country": "United States"
+		},
+		{
+			"slug": "rayburn-custom-yachts",
+			"name": "Rayburn Custom Yachts",
+			"country": "Canada"
+		},
+		{
+			"slug": "real",
+			"name": "Real",
+			"country": null
+		},
+		{
+			"slug": "reef-runner",
+			"name": "Reef Runner",
+			"country": null
+		},
+		{
+			"slug": "regal",
+			"name": "Regal",
+			"country": "United States"
+		},
+		{
+			"slug": "regulator",
+			"name": "Regulator",
+			"country": null
+		},
+		{
+			"slug": "rinker",
+			"name": "Rinker",
+			"country": null
+		},
+		{
+			"slug": "riva",
+			"name": "Riva",
+			"country": "Italy"
+		},
+		{
+			"slug": "riviera",
+			"name": "Riviera",
+			"country": "Australia"
+		},
+		{
+			"slug": "rmk-marine",
+			"name": "RMK Marine",
+			"country": null
+		},
+		{
+			"slug": "robalo",
+			"name": "Robalo",
+			"country": "United States"
+		},
+		{
+			"slug": "royal-hakvoort",
+			"name": "Royal Hakvoort",
+			"country": "Netherlands"
+		},
+		{
+			"slug": "rybovich",
+			"name": "Rybovich",
+			"country": null
+		},
+		{
+			"slug": "s2-yachts",
+			"name": "S2 Yachts",
+			"country": null
+		},
+		{
+			"slug": "sabre",
+			"name": "Sabre",
+			"country": "United States"
+		},
+		{
+			"slug": "sacs",
+			"name": "SACS",
+			"country": "Italy"
+		},
+		{
+			"slug": "saga",
+			"name": "Saga",
+			"country": null
+		},
+		{
+			"slug": "sailfish",
+			"name": "Sailfish",
+			"country": null
+		},
+		{
+			"slug": "sanlorenzo",
+			"name": "Sanlorenzo",
+			"country": "Italy"
+		},
+		{
+			"slug": "santa-cruz",
+			"name": "Santa Cruz",
+			"country": null
+		},
+		{
+			"slug": "savannah",
+			"name": "Savannah",
+			"country": null
+		},
+		{
+			"slug": "saxdor",
+			"name": "Saxdor",
+			"country": null
+		},
+		{
+			"slug": "say",
+			"name": "SAY",
+			"country": null
+		},
+		{
+			"slug": "schaefer",
+			"name": "Schaefer",
+			"country": null
+		},
+		{
+			"slug": "scout",
+			"name": "Scout",
+			"country": "United States"
+		},
+		{
+			"slug": "sea-chaser",
+			"name": "Sea Chaser",
+			"country": null
+		},
+		{
+			"slug": "sea-fox",
+			"name": "Sea Fox",
+			"country": null
+		},
+		{
+			"slug": "sea-hunt",
+			"name": "Sea Hunt",
+			"country": null
+		},
+		{
+			"slug": "sea-ray",
+			"name": "Sea Ray",
+			"country": "United States"
+		},
+		{
+			"slug": "seahunter",
+			"name": "SeaHunter",
+			"country": null
+		},
+		{
+			"slug": "seavee",
+			"name": "SeaVee",
+			"country": null
+		},
+		{
+			"slug": "seaward",
+			"name": "Seaward",
+			"country": null
+		},
+		{
+			"slug": "ses-yachts",
+			"name": "SES Yachts",
+			"country": null
+		},
+		{
+			"slug": "shannon",
+			"name": "Shannon",
+			"country": null
+		},
+		{
+			"slug": "shearwater",
+			"name": "ShearWater",
+			"country": null
+		},
+		{
+			"slug": "silverton",
+			"name": "Silverton",
+			"country": null
+		},
+		{
+			"slug": "sirena",
+			"name": "Sirena",
+			"country": null
+		},
+		{
+			"slug": "skipper",
+			"name": "Skipper",
+			"country": null
+		},
+		{
+			"slug": "slocum",
+			"name": "Slocum",
+			"country": null
+		},
+		{
+			"slug": "solaris",
+			"name": "Solaris",
+			"country": null
+		},
+		{
+			"slug": "southport",
+			"name": "Southport",
+			"country": null
+		},
+		{
+			"slug": "sportsman",
+			"name": "Sportsman",
+			"country": null
+		},
+		{
+			"slug": "stamas",
+			"name": "Stamas",
+			"country": null
+		},
+		{
+			"slug": "starcraft",
+			"name": "Starcraft",
+			"country": null
+		},
+		{
+			"slug": "statement",
+			"name": "Statement",
+			"country": null
+		},
+		{
+			"slug": "steeler",
+			"name": "Steeler",
+			"country": null
+		},
+		{
+			"slug": "stingray",
+			"name": "Stingray",
+			"country": null
+		},
+		{
+			"slug": "strike",
+			"name": "Strike",
+			"country": null
+		},
+		{
+			"slug": "sumerset",
+			"name": "Sumerset",
+			"country": null
+		},
+		{
+			"slug": "sunpower-yachts",
+			"name": "Sunpower Yachts",
+			"country": null
+		},
+		{
+			"slug": "sunreef-yachts",
+			"name": "Sunreef Yachts",
+			"country": "Poland"
+		},
+		{
+			"slug": "sunsation",
+			"name": "Sunsation",
+			"country": null
+		},
+		{
+			"slug": "sunseeker",
+			"name": "Sunseeker",
+			"country": "United Kingdom"
+		},
+		{
+			"slug": "surf-hunter",
+			"name": "Surf-Hunter",
+			"country": null
+		},
+		{
+			"slug": "symbol",
+			"name": "Symbol",
+			"country": "Taiwan"
+		},
+		{
+			"slug": "tartan",
+			"name": "Tartan",
+			"country": null
+		},
+		{
+			"slug": "tayana",
+			"name": "Tayana",
+			"country": null
+		},
+		{
+			"slug": "tiara-yachts",
+			"name": "Tiara Yachts",
+			"country": "United States"
+		},
+		{
+			"slug": "tidewater",
+			"name": "Tidewater",
+			"country": null
+		},
+		{
+			"slug": "timmerman",
+			"name": "Timmerman",
+			"country": "Russia"
+		},
+		{
+			"slug": "tollycraft",
+			"name": "Tollycraft",
+			"country": "United States"
+		},
+		{
+			"slug": "topaz",
+			"name": "Topaz",
+			"country": null
+		},
+		{
+			"slug": "toy-marine",
+			"name": "Toy Marine",
+			"country": null
+		},
+		{
+			"slug": "trinity",
+			"name": "Trinity",
+			"country": "United States"
+		},
+		{
+			"slug": "triton",
+			"name": "Triton",
+			"country": null
+		},
+		{
+			"slug": "trumpy",
+			"name": "Trumpy",
+			"country": null
+		},
+		{
+			"slug": "tureddi",
+			"name": "Tureddi",
+			"country": null
+		},
+		{
+			"slug": "twin-vee",
+			"name": "Twin Vee",
+			"country": null
+		},
+		{
+			"slug": "ultra-lite-tenders",
+			"name": "Ultra Lite Tenders",
+			"country": null
+		},
+		{
+			"slug": "uniesse",
+			"name": "Uniesse",
+			"country": null
+		},
+		{
+			"slug": "valhalla-boatworks",
+			"name": "Valhalla Boatworks",
+			"country": null
+		},
+		{
+			"slug": "vandutch",
+			"name": "VanDutch",
+			"country": null
+		},
+		{
+			"slug": "vanquish",
+			"name": "Vanquish",
+			"country": null
+		},
+		{
+			"slug": "vicem",
+			"name": "Vicem",
+			"country": "Turkey"
+		},
+		{
+			"slug": "viking",
+			"name": "Viking",
+			"country": "United States"
+		},
+		{
+			"slug": "viking-princess",
+			"name": "Viking Princess",
+			"country": null
+		},
+		{
+			"slug": "vision",
+			"name": "Vision",
+			"country": null
+		},
+		{
+			"slug": "vitruvius-yachts",
+			"name": "Vitruvius Yachts",
+			"country": null
+		},
+		{
+			"slug": "voyage-yachts",
+			"name": "Voyage Yachts",
+			"country": null
+		},
+		{
+			"slug": "wajer",
+			"name": "Wajer",
+			"country": null
+		},
+		{
+			"slug": "walker-bay",
+			"name": "Walker Bay",
+			"country": "United States"
+		},
+		{
+			"slug": "wally",
+			"name": "Wally",
+			"country": null
+		},
+		{
+			"slug": "wauquiez",
+			"name": "Wauquiez",
+			"country": null
+		},
+		{
+			"slug": "weaver",
+			"name": "Weaver",
+			"country": null
+		},
+		{
+			"slug": "wellcraft",
+			"name": "Wellcraft",
+			"country": null
+		},
+		{
+			"slug": "west-bay",
+			"name": "West Bay",
+			"country": null
+		},
+		{
+			"slug": "westport",
+			"name": "Westport",
+			"country": "United States"
+		},
+		{
+			"slug": "westship",
+			"name": "Westship",
+			"country": "United States"
+		},
+		{
+			"slug": "wicks-bros",
+			"name": "Wicks Bros.",
+			"country": null
+		},
+		{
+			"slug": "wider",
+			"name": "Wider",
+			"country": "Italy"
+		},
+		{
+			"slug": "williams-jet-tenders",
+			"name": "Williams Jet Tenders",
+			"country": null
+		},
+		{
+			"slug": "world-cat",
+			"name": "World Cat",
+			"country": null
+		},
+		{
+			"slug": "x-yachts",
+			"name": "X-Yachts",
+			"country": "Denmark"
+		},
+		{
+			"slug": "yamaha-boats",
+			"name": "Yamaha Boats",
+			"country": "Japan"
+		},
+		{
+			"slug": "yellowfin",
+			"name": "Yellowfin",
+			"country": "United States"
+		},
+		{
+			"slug": "zeelander",
+			"name": "Zeelander",
+			"country": null
+		},
+		{
+			"slug": "zodiac",
+			"name": "Zodiac",
+			"country": null
+		}
+	]
+}

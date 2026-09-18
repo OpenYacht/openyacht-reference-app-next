@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openyacht.org/schemas/v1/capabilities.schema.json",
+  "title": "OpenYacht Capabilities",
+  "description": "Response of unsigned GET /openyacht/v1/capabilities. The prose spec (spec/api-design.md) is normative; this schema is normative for JSON shape only — on any conflict the prose wins and this schema is defective. The features object lists optional protocol features only; absence of a flag means the capability is part of the mandatory baseline, so consumers check flags, and unknown flags (added by minor versions) validate as booleans.",
+  "type": "object",
+  "properties": {
+    "protocol_versions": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+      "minItems": 1
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "subscriptions": { "type": "boolean" },
+        "charter_listings": { "type": "boolean" },
+        "media_hashes": { "type": "boolean" }
+      },
+      "additionalProperties": { "type": "boolean" }
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "page_size_max": { "type": "integer" },
+        "rate_per_hour": { "type": "integer" }
+      },
+      "additionalProperties": { "type": "integer" }
+    }
+  },
+  "required": ["protocol_versions", "features", "limits"],
+  "patternProperties": { "^x_": true },
+  "additionalProperties": false
+}

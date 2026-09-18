@@ -1,0 +1,168 @@
+{
+	"registry": "openyacht-categories",
+	"version": "2026.08.0",
+	"canonical_url": "https://openyacht.org/registry/categories.json",
+	"notes": "Fixed category vocabulary for the OpenYacht protocol: the set list both authorities and consumers validate specifications.category slugs against. Names are singular; category slugs never encode the power_or_sail axis (that is a separate field). Versioned like tzdata: consumers vendor a copy and update out-of-band; never fetched at request time. Additions via pull request to the spec repository.",
+	"categories": [
+		{
+			"slug": "aft-cabin",
+			"name": "Aft Cabin"
+		},
+		{
+			"slug": "bass-boat",
+			"name": "Bass Boat"
+		},
+		{
+			"slug": "bay-boat",
+			"name": "Bay Boat"
+		},
+		{
+			"slug": "bowrider",
+			"name": "Bowrider"
+		},
+		{
+			"slug": "catamaran",
+			"name": "Catamaran"
+		},
+		{
+			"slug": "center-cockpit",
+			"name": "Center Cockpit"
+		},
+		{
+			"slug": "center-console",
+			"name": "Center Console"
+		},
+		{
+			"slug": "convertible-boat",
+			"name": "Convertible Boat"
+		},
+		{
+			"slug": "coupe",
+			"name": "Coupe"
+		},
+		{
+			"slug": "cruiser",
+			"name": "Cruiser"
+		},
+		{
+			"slug": "cruiser-racer",
+			"name": "Cruiser-Racer"
+		},
+		{
+			"slug": "cuddy-cabin",
+			"name": "Cuddy Cabin"
+		},
+		{
+			"slug": "cutter",
+			"name": "Cutter"
+		},
+		{
+			"slug": "daysailer",
+			"name": "Daysailer"
+		},
+		{
+			"slug": "deck-boat",
+			"name": "Deck Boat"
+		},
+		{
+			"slug": "deck-saloon",
+			"name": "Deck Saloon"
+		},
+		{
+			"slug": "downeast",
+			"name": "Downeast"
+		},
+		{
+			"slug": "expedition-yacht",
+			"name": "Expedition Yacht"
+		},
+		{
+			"slug": "express-cruiser",
+			"name": "Express Cruiser"
+		},
+		{
+			"slug": "flybridge",
+			"name": "Flybridge"
+		},
+		{
+			"slug": "gigayacht",
+			"name": "Gigayacht"
+		},
+		{
+			"slug": "inflatable",
+			"name": "Inflatable"
+		},
+		{
+			"slug": "jet-boat",
+			"name": "Jet Boat"
+		},
+		{
+			"slug": "ketch",
+			"name": "Ketch"
+		},
+		{
+			"slug": "motor-yacht",
+			"name": "Motor Yacht"
+		},
+		{
+			"slug": "motorsailer",
+			"name": "Motorsailer"
+		},
+		{
+			"slug": "multi-hull",
+			"name": "Multi-Hull"
+		},
+		{
+			"slug": "pilothouse",
+			"name": "Pilothouse"
+		},
+		{
+			"slug": "pontoon-boat",
+			"name": "Pontoon Boat"
+		},
+		{
+			"slug": "racing-sailboat",
+			"name": "Racing Sailboat"
+		},
+		{
+			"slug": "rigid-inflatable-boat",
+			"name": "Rigid Inflatable Boat"
+		},
+		{
+			"slug": "runabout",
+			"name": "Runabout"
+		},
+		{
+			"slug": "schooner",
+			"name": "Schooner"
+		},
+		{
+			"slug": "sloop",
+			"name": "Sloop"
+		},
+		{
+			"slug": "sport-fishing",
+			"name": "Sport Fishing"
+		},
+		{
+			"slug": "superyacht",
+			"name": "Superyacht"
+		},
+		{
+			"slug": "tender",
+			"name": "Tender"
+		},
+		{
+			"slug": "trawler",
+			"name": "Trawler"
+		},
+		{
+			"slug": "trimaran",
+			"name": "Trimaran"
+		},
+		{
+			"slug": "yawl",
+			"name": "Yawl"
+		}
+	]
+}
