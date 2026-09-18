@@ -14,3 +14,7 @@ export const vendoredRegistry: SlugRegistry = {
 };
 
 export const registryVersions = { builders: builders.version, categories: categories.version };
+
+/** For data-entry pickers: a fixed choice from the vendored registry (LS-11), never free text turned into a slug. */
+export const builderChoices = builders.builders.map(({ slug, name }) => ({ slug, name }));
+export const categoryChoices = categories.categories.map(({ slug, name }) => ({ slug, name }));

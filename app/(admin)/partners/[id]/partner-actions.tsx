@@ -14,7 +14,15 @@ import {
 } from "@heroui/react";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { PolicyOptions } from "@/components/policy-options";
-import { introduceAction, refreshKeysAction, removePartnerAction, setPolicyAction, setTrustAction, syncNowAction } from "../actions";
+import {
+  introduceAction,
+  refreshKeysAction,
+  removePartnerAction,
+  setFieldGroupsAction,
+  setPolicyAction,
+  setTrustAction,
+  syncNowAction,
+} from "../actions";
 
 const Id = ({ partnerId }: { partnerId: string }) => <input type="hidden" name="partner_id" value={partnerId} />;
 
@@ -106,5 +114,38 @@ export function TrustAndRemoval({ partnerId, trustLevel, removable }: { partnerI
         </ActionForm>
       )}
     </div>
+  );
+}
+
+const FIELD_GROUPS = [
+  ["pricing", "Pricing", "The asking price and currency, and charter rates."],
+  ["history", "Price history", "Every asking price the listing has had."],
+  ["location_exact", "Exact location", "The marina or berth, and coordinates. The public wording is always sent."],
+  ["vessel_identifiers", "Vessel identifiers", "HIN, IMO, MMSI and official number."],
+  ["documents", "Documents", "Brochures, plans and other files."],
+  ["media_original", "Original media", "Full-resolution originals instead of the derived renditions."],
+] as const;
+
+export function FieldGroupsForm({ partnerId, granted }: { partnerId: string; granted: string[] }) {
+  return (
+    <ActionForm action={setFieldGroupsAction}>
+      <Id partnerId={partnerId} />
+      <div className="flex flex-col gap-3">
+        {FIELD_GROUPS.map(([value, label, description]) => (
+          <Checkbox key={value} name="field_groups" value={value} defaultSelected={granted.includes(value)}>
+            <CheckboxContent>
+              <CheckboxControl>
+                <CheckboxIndicator />
+              </CheckboxControl>
+              <Label>{label}</Label>
+            </CheckboxContent>
+            <Description>{description}</Description>
+          </Checkbox>
+        ))}
+      </div>
+      <SubmitButton variant="secondary" className="self-start">
+        Save
+      </SubmitButton>
+    </ActionForm>
   );
 }

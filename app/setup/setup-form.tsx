@@ -1,18 +1,12 @@
 "use client";
 
 import {
-  Alert,
-  AlertContent,
-  AlertDescription,
-  AlertTitle,
-  Button,
   Checkbox,
   CheckboxContent,
   CheckboxControl,
   CheckboxIndicator,
   Description,
   FieldError,
-  Form,
   Input,
   Label,
   Radio,
@@ -22,25 +16,12 @@ import {
   RadioIndicator,
   TextField,
 } from "@heroui/react";
-import { useActionState } from "react";
-import { completeSetupAction, type SetupFormState } from "./actions";
-
-const initialState: SetupFormState = { message: null };
+import { ActionForm, SubmitButton } from "@/components/action-form";
+import { completeSetupAction } from "./actions";
 
 export function SetupForm({ domain, disposable, minPasswordLength }: { domain: string; disposable: boolean; minPasswordLength: number }) {
-  const [state, action, pending] = useActionState(completeSetupAction, initialState);
-
   return (
-    <Form action={action} className="flex flex-col gap-6">
-      {state.message !== null && (
-        <Alert status="danger">
-          <AlertContent>
-            <AlertTitle>Setup did not complete</AlertTitle>
-            <AlertDescription>{state.message}</AlertDescription>
-          </AlertContent>
-        </Alert>
-      )}
-
+    <ActionForm action={completeSetupAction} className="flex flex-col gap-6">
       <TextField name="setup_token" type="password" isRequired autoComplete="off">
         <Label>Setup token</Label>
         <Input />
@@ -106,9 +87,9 @@ export function SetupForm({ domain, disposable, minPasswordLength }: { domain: s
         </CheckboxContent>
       </Checkbox>
 
-      <Button type="submit" variant="primary" isDisabled={pending}>
-        {pending ? "Setting up…" : "Create administrator and generate keys"}
-      </Button>
-    </Form>
+      <SubmitButton variant="primary" pendingLabel="Setting up…">
+        Create administrator and generate keys
+      </SubmitButton>
+    </ActionForm>
   );
 }

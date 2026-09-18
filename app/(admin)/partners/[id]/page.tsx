@@ -5,7 +5,7 @@ import { nextAttemptAt, parseNodeIdentity, partnerFreshness } from "@/federation
 import { requireRole } from "@/lib/auth/session";
 import { SupabasePartnerRepository } from "@/lib/federation/repositories";
 import { userClient } from "@/lib/supabase/server";
-import { Introduce, PolicyForm, RefreshKeys, SyncNow, TrustAndRemoval } from "./partner-actions";
+import { FieldGroupsForm, Introduce, PolicyForm, RefreshKeys, SyncNow, TrustAndRemoval } from "./partner-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export default async function PartnerPage({ params }: PageProps<"/partners/[id]"
   // What the partner said when it introduced itself, if it did.
   const { data: received } = await supabase
     .from("federation_partners")
-    .select("request_message, request_contact_email, requested_at, first_contact_at")
+    .select("request_message, request_contact_email, requested_at, first_contact_at, field_groups")
     .eq("id", partner.id)
     .maybeSingle();
 
@@ -121,6 +121,19 @@ export default async function PartnerPage({ params }: PageProps<"/partners/[id]"
         </CardHeader>
         <CardContent>
           <PolicyForm partnerId={partner.id} policy={partner.acceptancePolicy} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>What they see of your listings</CardTitle>
+          <CardDescription>
+            Anything not granted is withheld on this node before a listing is sent — they are never sent a value and asked to ignore it. Which
+            listings they receive is set on each listing.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldGroupsForm partnerId={partner.id} granted={(received?.field_groups as string[] | undefined) ?? []} />
         </CardContent>
       </Card>
 

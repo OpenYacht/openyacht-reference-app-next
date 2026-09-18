@@ -180,3 +180,31 @@ export async function removePartnerAction(_previous: ActionState, form: FormData
   revalidatePath("/partners");
   redirect("/partners");
 }
+
+const FIELD_GROUP_NAMES = ["pricing", "location_exact", "media_original", "documents", "vessel_identifiers", "history"];
+
+export async function setFieldGroupsAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  try {
+    const { partners } = await context();
+    const partner = await loadPartner(partners, form);
+    const groups = form
+      .getAll("field_groups")
+      .map(String)
+      .filter((group) => FIELD_GROUP_NAMES.includes(group));
+    // One database function changes the grants and re-announces this partner's
+    // listings to it — otherwise it would go on holding the old view, since no
+    // listing has changed.
+    const { data, error } = await (await userClient()).rpc("set_partner_field_groups", { p_partner_id: Number(partner.id), p_field_groups: groups });
+    if (error) return { ok: false, message: error.message };
+    revalidatePath(`/partners/${partner.id}`);
+    return {
+      ok: true,
+      message:
+        data === 0
+          ? "Saved."
+          : `Saved. ${data} listing${data === 1 ? "" : "s"} will be sent to this partner again, in the new form, on its next poll.`,
+    };
+  } catch (error) {
+    return explain(error);
+  }
+}

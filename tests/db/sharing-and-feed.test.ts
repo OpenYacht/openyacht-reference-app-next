@@ -11,6 +11,7 @@ if (config === null) throw new Error("The database lane needs POSTGRES_URL_NON_P
 const EDITOR = "00000000-0000-4000-8000-0000000000c1";
 const BROKER = "00000000-0000-4000-8000-0000000000c2";
 const VIEWER = "00000000-0000-4000-8000-0000000000c3";
+const SUPER_ADMIN = "00000000-0000-4000-8000-0000000000c4";
 
 const client = new pg.Client(config);
 let vesselId: string;
@@ -32,12 +33,16 @@ beforeEach(async () => {
   // database holds: sharing changes touch every verified partner.
   await client.query("delete from public.listing_copies");
   await client.query("delete from public.federation_partners");
-  await client.query("insert into auth.users (id, email) values ($1, 'e@node.example'), ($2, 'b@node.example'), ($3, 'v@node.example')", [
+  await client.query(
+    "insert into auth.users (id, email) values ($1, 'e@node.example'), ($2, 'b@node.example'), ($3, 'v@node.example'), ($4, 's@node.example')",
+    [EDITOR, BROKER, VIEWER, SUPER_ADMIN],
+  );
+  await client.query("insert into public.user_roles (user_id, role) values ($1, 'editor'), ($2, 'broker'), ($3, 'viewer'), ($4, 'super_admin')", [
     EDITOR,
     BROKER,
     VIEWER,
+    SUPER_ADMIN,
   ]);
-  await client.query("insert into public.user_roles (user_id, role) values ($1, 'editor'), ($2, 'broker'), ($3, 'viewer')", [EDITOR, BROKER, VIEWER]);
   vesselId = (await client.query("insert into public.vessels (builder_name) values ('Maritimo') returning id")).rows[0].id;
   const partner = async (domain: string, trust: string) =>
     (
@@ -318,5 +323,67 @@ describe("who may change sharing", () => {
   it("the feed and the dereference are the service role's alone", async () => {
     await expect(asUser(EDITOR, "select * from public.feed_for_partner($1, null, null, null, 10)", [alpha])).rejects.toThrow(/permission denied/);
     await expect(asUser(EDITOR, "select public.listing_for_partner($1, gen_random_uuid())", [alpha])).rejects.toThrow(/permission denied/);
+  });
+});
+
+describe("LS-14 changing what a partner is granted", () => {
+  const grant = (partnerId: string, groups: string[]) =>
+    client.query<{ n: number }>("select public.set_partner_field_groups($1, $2) as n", [partnerId, groups]).then((r) => r.rows[0]!.n);
+
+  it("re-announces every listing the partner can see — to that partner alone — though no listing changed", async () => {
+    const listing = await createListing();
+    await createListing({ status: "draft", name: "DRAFT" });
+    const alphaMark = (await feed(alpha))[0]!.effective_at;
+    const betaMark = (await feed(beta))[0]!.effective_at;
+
+    expect(await grant(alpha, ["pricing", "history"])).toBe(1); // the live listing, not the draft
+
+    const again = await feed(alpha, { since: alphaMark });
+    expect(again).toMatchObject([{ kind: "listing", listing_uuid: listing.uuid }]);
+    expect(again[0]!.effective_at > alphaMark).toBe(true);
+    // Beta's view is untouched, and the listing's own timestamp never moved.
+    expect((await feed(beta, { since: betaMark })).map((row) => row.effective_at)).toEqual([betaMark]);
+    const unchanged = (await client.query("select federation_updated_at from public.listings where id = $1", [listing.id])).rows[0];
+    expect(unchanged.federation_updated_at).toEqual(listing.federation_updated_at);
+  });
+
+  it("announces nothing when the set is unchanged, whatever its order", async () => {
+    await createListing();
+    await grant(alpha, ["pricing", "history"]);
+    expect(await grant(alpha, ["history", "pricing"])).toBe(0);
+  });
+
+  it("refuses a field group the protocol does not define", async () => {
+    await client.query("savepoint attempt");
+    await expect(grant(alpha, ["pricing", "everything"])).rejects.toThrow(/check constraint/);
+    await client.query("rollback to savepoint attempt");
+  });
+
+  it("is a super admin's alone, and field_groups cannot be written around it", async () => {
+    const call = "select public.set_partner_field_groups($1, '{pricing}')";
+    await expect(asUser(EDITOR, call, [alpha])).rejects.toThrow(/Only a super admin/);
+    await expect(asUser(SUPER_ADMIN, call, [alpha])).resolves.toBeDefined();
+    await expect(asUser(SUPER_ADMIN, "update public.federation_partners set field_groups = '{}' where id = $1", [alpha])).rejects.toThrow(
+      /permission denied/,
+    );
+    // …while the columns an administrator does set directly still can be.
+    expect(
+      await asUser(SUPER_ADMIN, "update public.federation_partners set acceptance_policy = 'accept_all' where id = $1 returning id", [alpha]),
+    ).toHaveLength(1);
+  });
+});
+
+describe("choosing partners to share with", () => {
+  const names = (userId: string) =>
+    asUser<{ domain: string }>(userId, "select domain from public.shareable_partners()").then((rows) => rows.map((row) => row.domain));
+
+  it("editors and brokers see the verified partners' names — and nothing else about them", async () => {
+    expect(await names(EDITOR)).toEqual(["alpha.example", "beta.example"]);
+    expect(await names(BROKER)).toEqual(["alpha.example", "beta.example"]);
+    expect(await asUser(EDITOR, "select * from public.federation_partners")).toEqual([]);
+  });
+
+  it("a viewer sees none", async () => {
+    expect(await names(VIEWER)).toEqual([]);
   });
 });

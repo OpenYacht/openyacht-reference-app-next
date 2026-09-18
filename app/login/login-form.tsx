@@ -1,23 +1,12 @@
 "use client";
 
-import { Alert, AlertContent, AlertDescription, Button, FieldError, Form, Input, Label, TextField } from "@heroui/react";
-import { useActionState } from "react";
-import { signInAction, type LoginFormState } from "./actions";
-
-const initialState: LoginFormState = { message: null };
+import { FieldError, Input, Label, TextField } from "@heroui/react";
+import { ActionForm, SubmitButton } from "@/components/action-form";
+import { signInAction } from "./actions";
 
 export function LoginForm() {
-  const [state, action, pending] = useActionState(signInAction, initialState);
-
   return (
-    <Form action={action} className="flex flex-col gap-5">
-      {state.message !== null && (
-        <Alert status="danger">
-          <AlertContent>
-            <AlertDescription>{state.message}</AlertDescription>
-          </AlertContent>
-        </Alert>
-      )}
+    <ActionForm action={signInAction} className="flex flex-col gap-5">
       <TextField name="email" type="email" isRequired autoComplete="username">
         <Label>Email</Label>
         <Input />
@@ -28,9 +17,9 @@ export function LoginForm() {
         <Input />
         <FieldError />
       </TextField>
-      <Button type="submit" variant="primary" isDisabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
-      </Button>
-    </Form>
+      <SubmitButton variant="primary" pendingLabel="Signing in…">
+        Sign in
+      </SubmitButton>
+    </ActionForm>
   );
 }

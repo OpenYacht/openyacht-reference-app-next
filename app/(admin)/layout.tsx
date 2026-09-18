@@ -15,6 +15,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/">) {
             <img src="/brand/openyacht-mark.svg" alt="" width={15} height={32} className="h-8 w-auto" />
             OpenYacht node
           </Link>
+          {session.role !== null && <Link href="/listings">Listings</Link>}
           {hasRole(session, "super_admin") && <Link href="/partners">Partners</Link>}
           {session.role !== null && <Link href="/copies">Partner listings</Link>}
         </nav>
