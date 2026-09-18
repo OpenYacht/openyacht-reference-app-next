@@ -100,9 +100,8 @@ export class Verifier {
     }
 
     // Step 2 — blocked partners (FP-9).
-    const partner = await this.options.partners.findByDomain(node);
-    if (partner === null) return reject("PARTNER_UNKNOWN", "No partner record for the sender domain.");
-    if (partner.trustLevel === "blocked") return reject("PARTNER_BLOCKED", "The sender is a blocked partner.");
+    const known = await this.options.partners.findByDomain(node);
+    if (known?.trustLevel === "blocked") return reject("PARTNER_BLOCKED", "The sender is a blocked partner.");
 
     const signature = Buffer.from(signatureText, "base64");
     if (signature.length !== ED25519_SIGNATURE_LENGTH) {
@@ -110,6 +109,31 @@ export class Verifier {
     }
     const signingString = buildSigningStringOrNull(request, this.options.ownDomain, timestamp);
     if (signingString === null) return reject("SIGNATURE_INVALID", "The request cannot form a signing string.");
+
+    // FP-13 — first contact from an unknown domain. Trust on first use: fetch
+    // what the domain serves and verify the request against it. Only a request
+    // that verifies creates a partner record — otherwise anyone could fill the
+    // partner list, and an administrator's inbox, by sending unsigned junk
+    // under other people's domain names.
+    if (known === null) {
+      const register = this.options.partners.registerFirstContact?.bind(this.options.partners);
+      if (register === undefined) return reject("PARTNER_UNKNOWN", "No partner record for the sender domain.");
+      let discovered;
+      try {
+        discovered = await this.options.wellKnown.fetchFresh(node);
+      } catch {
+        return reject("PARTNER_UNKNOWN", "The sender is unknown and its well-known document could not be fetched.");
+      }
+      if (!signatureMatches(discovered.keys, keyId, signingString, signature)) {
+        return reject("SIGNATURE_INVALID", "First contact: the signature does not verify against the sender's published keys.");
+      }
+      const registered = await register(node, discovered);
+      await this.options.observer?.firstContact?.({ domain: node, nodeName: discovered.name });
+      await this.options.replayGuard?.remember(tuple);
+      // Provisional. What a provisional partner may reach is the route's decision.
+      return { ok: true, partner: registered, keyId };
+    }
+    const partner = known;
 
     // Steps 3 and 4 — cached keys, selected by key ID.
     let verified = signatureMatches(partner.keys, keyId, signingString, signature);

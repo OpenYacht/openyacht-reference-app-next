@@ -152,7 +152,7 @@ describe("API-9 unknown federation paths", () => {
 describe("single-host guard", () => {
   it.each(["localhost:3000", "admin.brokerage.example", "brokerage.example"])("answers a bare 404 on %s", async (host) => {
     for (const handler of Object.values(handlers())) {
-      const response = await handler(get("/.well-known/openyacht", host));
+      const response = await handler(get("/.well-known/openyacht", host), ["GET"]);
       expect(response.status).toBe(404);
       expect(await response.text()).toBe("");
     }
@@ -167,7 +167,7 @@ describe("a node that is not ready publishes nothing", () => {
   it("answers 503 on every federation route until setup completes", async () => {
     const state: NodeState = { nodeUuid: null, identityDomain: null, setupCompleted: false };
     for (const handler of Object.values(handlers({ state }))) {
-      expect((await handler(get("/.well-known/openyacht"))).status).toBe(503);
+      expect((await handler(get("/.well-known/openyacht"), ["GET"])).status).toBe(503);
     }
   });
 

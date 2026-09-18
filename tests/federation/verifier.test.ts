@@ -246,6 +246,81 @@ describe("FP-13 senders the verifier will not look up", () => {
   });
 });
 
+describe("FP-13 first contact from an unknown domain", () => {
+  function firstContactHarness(fresh: DiscoveredNode | Error) {
+    const registered: string[] = [];
+    const notified: string[] = [];
+    let refetches = 0;
+    const verifier = new Verifier({
+      ownDomain: RECEIVER,
+      clock: { now: () => new Date(VECTOR_1.timestamp) },
+      partners: {
+        findByDomain: async () => null,
+        updateCachedKeys: async () => {},
+        downgradeToProvisional: async () => {},
+        registerFirstContact: async (domain, discovered) => {
+          registered.push(domain);
+          return { domain, nodeUuid: discovered.nodeUuid, trustLevel: "provisional", keys: discovered.keys, pinnedKeyId: null };
+        },
+      },
+      wellKnown: {
+        fetchFresh: async () => {
+          refetches++;
+          if (fresh instanceof Error) throw fresh;
+          return fresh;
+        },
+      },
+      observer: { firstContact: (event) => void notified.push(event.domain) },
+    });
+    return { verifier, registered, notified, refetches: () => refetches };
+  }
+
+  it("registers the sender as provisional, and tells administrators, once its signature verifies against its published keys", async () => {
+    const { verifier, registered, notified } = firstContactHarness({ nodeUuid: NODE_UUID, name: "Sender", keys: [testKey] });
+    const result = await verifier.verify(request(VECTOR_1));
+    expect(result).toMatchObject({ ok: true, partner: { domain: SENDER, trustLevel: "provisional" } });
+    expect(registered).toEqual([SENDER]);
+    expect(notified).toEqual([SENDER]);
+  });
+
+  it("registers nothing when the signature does not verify — a domain name in a header proves nothing", async () => {
+    const { verifier, registered, notified } = firstContactHarness({ nodeUuid: NODE_UUID, name: "Sender", keys: [testKey] });
+    const forged = request(VECTOR_1, { pathAndQuery: "/openyacht/v1/listings?page_size=1" });
+    expect(await verifier.verify(forged)).toMatchObject({ ok: false, code: "SIGNATURE_INVALID" });
+    expect(registered).toEqual([]);
+    expect(notified).toEqual([]);
+  });
+
+  it("answers PARTNER_UNKNOWN when the sender's well-known document cannot be fetched", async () => {
+    const { verifier, registered } = firstContactHarness(new Error("refused: not a public address"));
+    expect(await verifier.verify(request(VECTOR_1))).toMatchObject({ ok: false, code: "PARTNER_UNKNOWN" });
+    expect(registered).toEqual([]);
+  });
+
+  it("checks the timestamp window before fetching anything for an unknown sender", async () => {
+    const context = firstContactHarness({ nodeUuid: NODE_UUID, name: "Sender", keys: [testKey] });
+    const late = new Verifier({
+      ownDomain: RECEIVER,
+      clock: { now: () => new Date("2026-08-21T10:00:00Z") },
+      partners: {
+        findByDomain: async () => null,
+        updateCachedKeys: async () => {},
+        downgradeToProvisional: async () => {},
+        registerFirstContact: async () => {
+          throw new Error("must not register");
+        },
+      },
+      wellKnown: {
+        fetchFresh: async () => {
+          throw new Error("must not fetch");
+        },
+      },
+    });
+    expect(await late.verify(request(VECTOR_1))).toMatchObject({ ok: false, code: "TIMESTAMP_OUT_OF_RANGE" });
+    expect(context.refetches()).toBe(0);
+  });
+});
+
 describe("replay protection (SHOULD, verification step 1)", () => {
   it("rejects an exact duplicate inside the window, and only remembers verified requests", async () => {
     const { verifier } = harness({ now: VECTOR_1.timestamp, replayGuard: true });
