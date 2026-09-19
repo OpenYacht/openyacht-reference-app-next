@@ -127,7 +127,7 @@ describe("API-6 unsigned endpoints", () => {
     expect(response.status).toBe(200);
     const document = await response.json();
     expectValid(`${SCHEMA_BASE}capabilities.schema.json`, document);
-    expect(document.features).toEqual({ subscriptions: false, charter_listings: true, media_hashes: false });
+    expect(document.features).toEqual({ subscriptions: false, charter_listings: true, media_hashes: true });
   });
 
   it("GET /openyacht/v1/health matches the OpenAPI Health component", async () => {

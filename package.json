@@ -33,7 +33,8 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "sanitize-html": "2.17.7",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "sharp": "0.35.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

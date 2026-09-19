@@ -8,6 +8,8 @@ import { requireRole } from "@/lib/auth/session";
 import { builderChoices, categoryChoices } from "@/lib/federation/registry";
 import { descriptionSanitiser } from "@/lib/federation/sanitiser";
 import { parseListingForm, withOverview } from "@/lib/listings/listing-form";
+import { storedFiles, type StoredMedia } from "@/lib/listings/own-listing-row";
+import { ORIGINALS_BUCKET, SERVED_BUCKET } from "@/lib/media/storage";
 import { userClient } from "@/lib/supabase/server";
 
 // Every write here runs as the signed-in user. Row level security decides
@@ -140,15 +142,21 @@ export async function setSharingAction(_previous: ActionState, form: FormData): 
 
 export async function deleteDraftAction(_previous: ActionState, form: FormData): Promise<ActionState> {
   await requireRole("editor");
-  const { error, count } = await (
-    await userClient()
-  )
+  const supabase = await userClient();
+  const { data, error } = await supabase
     .from("listings")
-    .delete({ count: "exact" })
+    .delete()
     .eq("id", Number(form.get("listing_id")))
-    .eq("status", "draft");
+    .eq("status", "draft")
+    .select("media");
   if (error) return failed(error.message);
-  if (count === 0) return failed("Only a draft can be deleted. A listing that has been distributed ends by being withdrawn or sold.");
+  if (data.length === 0) return failed("Only a draft can be deleted. A listing that has been distributed ends by being withdrawn or sold.");
+
+  // A draft was never served, so nobody holds a URL to any of this. The storage
+  // policies let an editor remove the files of a listing that no longer exists.
+  const { served, originals } = storedFiles(data[0]!.media as StoredMedia);
+  if (served.length > 0) await supabase.storage.from(SERVED_BUCKET).remove(served);
+  if (originals.length > 0) await supabase.storage.from(ORIGINALS_BUCKET).remove(originals);
   revalidatePath("/listings");
   redirect("/listings");
 }

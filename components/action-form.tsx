@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, AlertContent, AlertDescription, Button, Form } from "@heroui/react";
-import { createContext, startTransition, use, useActionState, type ComponentProps, type FormEvent, type ReactNode } from "react";
+import { createContext, startTransition, use, useActionState, useEffect, useRef, type ComponentProps, type FormEvent, type ReactNode } from "react";
 
 export interface ActionState {
   ok: boolean;
@@ -21,8 +21,23 @@ const PendingContext = createContext(false);
  * the user had typed over one mistyped field. Submitted this way the fields
  * keep their values, and the error appears above them.
  */
-export function ActionForm({ action, children, className }: { action: Action; children: ReactNode; className?: string }) {
+export function ActionForm({
+  action,
+  children,
+  className,
+  resetOnSuccess = false,
+}: {
+  action: Action;
+  children: ReactNode;
+  className?: string;
+  /** For a form that adds something: empty it once the action has succeeded, ready for the next one. */
+  resetOnSuccess?: boolean;
+}) {
   const [state, formAction, pending] = useActionState(action, { ok: true, message: null });
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (resetOnSuccess && state.ok && state.message !== null) form.current?.reset();
+  }, [resetOnSuccess, state]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,7 +47,7 @@ export function ActionForm({ action, children, className }: { action: Action; ch
 
   return (
     <PendingContext value={pending}>
-      <Form onSubmit={submit} className={className ?? "flex flex-col gap-4"}>
+      <Form ref={form} onSubmit={submit} className={className ?? "flex flex-col gap-4"}>
         {state.message !== null && (
           <Alert status={state.ok ? "success" : "danger"}>
             <AlertContent>
@@ -46,10 +61,10 @@ export function ActionForm({ action, children, className }: { action: Action; ch
   );
 }
 
-export function SubmitButton({ children, pendingLabel, ...props }: ComponentProps<typeof Button> & { pendingLabel?: string }) {
+export function SubmitButton({ children, pendingLabel, isDisabled, ...props }: ComponentProps<typeof Button> & { pendingLabel?: string }) {
   const pending = use(PendingContext);
   return (
-    <Button type="submit" isDisabled={pending} {...props}>
+    <Button type="submit" {...props} isDisabled={pending || isDisabled === true}>
       {pending ? (pendingLabel ?? "Working…") : children}
     </Button>
   );

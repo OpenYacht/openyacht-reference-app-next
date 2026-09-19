@@ -9,10 +9,12 @@ pointed at it — how each requirement of the specification looks in ordinary Ty
 [conformance checklist](https://github.com/OpenYacht/protocol/blob/main/spec/conformance-checklist.md): `describe("FP-7 …")` is requirement
 FP-7.
 
-> **Status: in progress.** Built so far: the federation core (keys, signing, verification, discovery), first-run setup, and the **consumer
-> role** — adding partners, the signed partnership request, cold sync and `updated_since` polling, tombstones, copies with provenance, and
-> a per-partner acceptance policy — and receiving signed partnership requests from nodes that contact this one first. The **authority role** — serving this node's own listings to partners — is not built yet, so
-> `/openyacht/v1/listings` answers `NOT_FOUND`.
+> **Status: in progress.** Built so far: the federation core (keys, signing, verification, discovery) and first-run setup; the **consumer
+> role** — adding partners, the signed partnership request, cold sync and `updated_since` polling, tombstones, copies with provenance, a
+> per-partner acceptance policy, and receiving signed partnership requests from nodes that contact this one first; and the **authority
+> role** — this node's own sale and charter listings, per-listing sharing, per-partner field groups, the partner feed with tombstones and an
+> opaque cursor, and listing media (renditions and SHA-256 hashes made at upload, originals behind expiring URLs). Not built yet: key
+> rotation and per-partner rate limiting.
 
 ## The part you can lift: `federation/`
 

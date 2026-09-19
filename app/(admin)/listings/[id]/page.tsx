@@ -4,10 +4,13 @@ import { notFound } from "next/navigation";
 import { canonicalUri, parseNodeIdentity } from "@/federation";
 import { hasRole, requireSession } from "@/lib/auth/session";
 import { builderChoices, categoryChoices } from "@/lib/federation/registry";
+import type { StoredImage, StoredMedia } from "@/lib/listings/own-listing-row";
+import { servedUrl } from "@/lib/media/storage";
 import { userClient } from "@/lib/supabase/server";
 import { updateListingAction } from "../actions";
 import { ListingForm } from "../listing-form";
 import { SharingForm, StatusControls } from "./listing-controls";
+import { MediaPanel, type MediaItemView, type MediaView } from "./media-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +18,34 @@ const record = (value: unknown): Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 const text = (value: unknown) => (typeof value === "string" ? value : null);
 const num = (value: unknown) => (typeof value === "number" ? value : null);
+
+/** What the media panel shows. This node's own screens use the served renditions; originals are for partners. */
+function mediaView(media: StoredMedia): MediaView {
+  const image = (item: StoredImage): MediaItemView => ({
+    id: item.id,
+    thumbnailUrl: servedUrl(item.thumbnail_path),
+    href: servedUrl(item.path),
+    title: `${item.width} × ${item.height}${item.original ? `, original ${item.original.width} × ${item.original.height}` : ""}`,
+    caption: item.caption ?? null,
+    category: item.category ?? null,
+  });
+  const bySort = <T extends { sort?: number }>(items: T[] | undefined) => [...(items ?? [])].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+  const link = (item: { id: string; url: string; caption?: string | null }): MediaItemView => ({
+    id: item.id,
+    thumbnailUrl: null,
+    href: item.url,
+    title: item.url,
+    caption: item.caption ?? null,
+  });
+  return {
+    profile: media.profile ? image(media.profile) : null,
+    gallery: bySort(media.gallery).map(image),
+    layouts: bySort(media.layouts).map(image),
+    videos: bySort(media.videos).map(link),
+    tours: bySort(media.tours).map(link),
+    documents: bySort(media.documents).map((item) => ({ ...link({ ...item, url: servedUrl(item.path) }), title: "PDF document" })),
+  };
+}
 
 export default async function ListingPage({ params }: PageProps<"/listings/[id]">) {
   const session = await requireSession();
@@ -120,6 +151,21 @@ export default async function ListingPage({ params }: PageProps<"/listings/[id]"
                 ))}
               </ul>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {canEdit && !ended && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Media</CardTitle>
+            <CardDescription>
+              Every image is stored at upload as the three files partners are served: a full-resolution original for partners granted original media,
+              a derived rendition for everyone else, and a thumbnail. Each change here reaches partners on their next poll.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MediaPanel listingId={listing.id} media={mediaView(listing.media as StoredMedia)} />
           </CardContent>
         </Card>
       )}

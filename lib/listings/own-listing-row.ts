@@ -44,12 +44,116 @@ export interface ListingRow {
   specifications: OwnListing["specifications"];
   descriptions: OwnListing["descriptions"];
   features: OwnListing["features"];
-  media: OwnListing["media"];
+  media: StoredMedia;
   charter: OwnListing["charter"];
   usage: OwnListing["usage"];
   compliance: OwnListing["compliance"];
   listed_at: string | Date | null;
   federation_updated_at: string | Date;
+}
+
+/**
+ * An image as the `media` column holds it: where its files are, never what
+ * their URLs are. A URL depends on where the node is deployed and, for an
+ * original, on when it was asked for — so URLs are made when a listing is
+ * served. `sha256`, `width` and `height` describe the derived rendition;
+ * `original` describes the full-resolution file separately, because a partner
+ * verifies the bytes it was actually given.
+ */
+export interface StoredImage {
+  id: string;
+  path: string;
+  thumbnail_path: string;
+  sha256: string;
+  width: number;
+  height: number;
+  caption?: string | null;
+  category?: "exterior" | "interior" | "lifestyle" | "crew" | null;
+  sort?: number;
+  original?: { path: string; sha256: string; width: number; height: number } | null;
+}
+
+/** A link to a video or a tour hosted elsewhere: a URL of its own, and no hash (the file is not this node's). */
+export interface StoredLink {
+  id: string;
+  url: string;
+  caption?: string | null;
+  sort: number;
+}
+
+export interface StoredDocument {
+  id: string;
+  path: string;
+  sha256: string;
+  caption?: string | null;
+  sort: number;
+}
+
+export interface StoredMedia {
+  profile?: StoredImage | null;
+  gallery?: StoredImage[];
+  layouts?: StoredImage[];
+  videos?: StoredLink[];
+  tours?: StoredLink[];
+  documents?: StoredDocument[];
+}
+
+/** How stored paths become URLs. The host supplies it; tests fake it. */
+export interface MediaUrls {
+  /** The plain HTTPS URL of a file in the public bucket. */
+  served(path: string): string;
+  /** A URL for a full-resolution original, or null when none was made for this request. */
+  original(path: string): string | null;
+}
+
+/** The paths of every original a page of listings holds: what to mint URLs for, in one request. */
+export const originalPaths = (media: StoredMedia): string[] =>
+  [media.profile, ...(media.gallery ?? []), ...(media.layouts ?? [])].flatMap((image) => (image?.original ? [image.original.path] : []));
+
+/** Every file behind a media block, by bucket: what to remove when the item, or the listing, goes. */
+export function storedFiles(media: StoredMedia): { served: string[]; originals: string[] } {
+  const images = [media.profile, ...(media.gallery ?? []), ...(media.layouts ?? [])].filter((image) => image !== null && image !== undefined);
+  return {
+    served: [...images.flatMap((image) => [image.path, image.thumbnail_path]), ...(media.documents ?? []).map((document) => document.path)],
+    originals: originalPaths(media),
+  };
+}
+
+// Only what belongs on the wire is carried across: the node's own bookkeeping
+// (`id`, the paths) stays behind.
+function toMedia(media: StoredMedia, urls: MediaUrls): OwnListing["media"] {
+  const image = (item: StoredImage) => {
+    const originalUrl = item.original ? urls.original(item.original.path) : null;
+    return {
+      url: urls.served(item.path),
+      // Always this node's own rendition of the same image (LS-16).
+      thumbnail_url: urls.served(item.thumbnail_path),
+      sha256: item.sha256,
+      width: item.width,
+      height: item.height,
+      caption: item.caption ?? null,
+      original:
+        item.original && originalUrl !== null
+          ? { url: originalUrl, sha256: item.original.sha256, width: item.original.width, height: item.original.height }
+          : null,
+    };
+  };
+  const sort = (item: { sort?: number }, index: number) => item.sort ?? index + 1;
+  // `sha256` stays null for a link: the file is on someone else's platform.
+  const link = (item: StoredLink, index: number) => ({ url: item.url, caption: item.caption ?? null, sort: sort(item, index) });
+  return {
+    profile: media.profile ? image(media.profile) : null,
+    gallery: (media.gallery ?? []).map((item, index) => ({ ...image(item), category: item.category ?? null, sort: sort(item, index) })),
+    layouts: (media.layouts ?? []).map((item, index) => ({ ...image(item), sort: sort(item, index) })),
+    videos: (media.videos ?? []).map(link),
+    tours: (media.tours ?? []).map(link),
+    documents: (media.documents ?? []).map((item, index) => ({
+      url: urls.served(item.path),
+      sha256: item.sha256,
+      caption: item.caption ?? null,
+      sort: sort(item, index),
+    })),
+  };
 }
 
 export interface PriceHistoryRow {
@@ -62,7 +166,7 @@ export interface PriceHistoryRow {
 const wireTimestamp = (value: string | Date) => `${new Date(value).toISOString().slice(0, 19)}Z`;
 const vocab = (name: string | null, slug: string | null) => (name === null ? null : { name, slug });
 
-export function toOwnListing(row: ListingRow, vessel: VesselRow, priceHistory: PriceHistoryRow[]): OwnListing {
+export function toOwnListing(row: ListingRow, vessel: VesselRow, priceHistory: PriceHistoryRow[], urls: MediaUrls): OwnListing {
   const hasAgreement = row.agreement_type !== null || row.co_brokerage !== null;
   return {
     uuid: row.uuid,
@@ -112,7 +216,7 @@ export function toOwnListing(row: ListingRow, vessel: VesselRow, priceHistory: P
     specifications: row.specifications,
     descriptions: row.descriptions,
     features: row.features,
-    media: row.media,
+    media: toMedia(row.media, urls),
     charter: row.charter,
     usage: row.usage,
     compliance: row.compliance,

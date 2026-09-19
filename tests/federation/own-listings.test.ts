@@ -241,6 +241,12 @@ describe("LS-7 / LS-8", () => {
   it("LS-8: a listing with no imagery has `profile: null` — no placeholder", () => {
     expect(serializeListing(minimal("sale"), { domain: DOMAIN, grants: ALL }).media.profile).toBeNull();
   });
+
+  it("LS-8: imagery without a profile image is refused, not papered over with the first gallery image", () => {
+    const listing = minimal("sale");
+    listing.media = { profile: null, gallery: [{ url: "https://authority.example/media/01.jpg", sort: 1 }] };
+    expect(() => serializeListing(listing, { domain: DOMAIN, grants: ALL })).toThrow(ListingError);
+  });
 });
 
 describe("ID-1 canonical URIs and tombstones", () => {

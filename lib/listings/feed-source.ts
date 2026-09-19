@@ -11,8 +11,9 @@ import {
   type OpenYachtListing,
   type ServedItem,
 } from "@/federation";
+import { mediaUrls, mediaUrlsWithOriginals } from "@/lib/media/storage";
 import { serviceClient } from "@/lib/supabase/service";
-import { toOwnListing, type ListingRow, type PriceHistoryRow, type VesselRow } from "./own-listing-row";
+import { originalPaths, toOwnListing, type ListingRow, type MediaUrls, type PriceHistoryRow, type VesselRow } from "./own-listing-row";
 
 // The partner feed over Supabase. Service role throughout: the caller is a
 // partner node, already authenticated by its signature. Which listings it may
@@ -49,17 +50,21 @@ async function loadListings(ids: number[]): Promise<Map<number, StoredListing>> 
   return new Map((data as StoredListing[]).map((row) => [row.id, row]));
 }
 
-const serve = (row: StoredListing, domain: string, grants: Set<FieldGroup>): OpenYachtListing =>
-  serializeListing(toOwnListing(row, row.vessels, row.price_history), { domain, grants });
+const serve = (row: StoredListing, domain: string, grants: Set<FieldGroup>, urls: MediaUrls): OpenYachtListing =>
+  serializeListing(toOwnListing(row, row.vessels, row.price_history, urls), { domain, grants });
+
+/** Originals are private files: URLs for them are minted only for a partner granted `media_original`, one request per page. */
+const urlsFor = (rows: StoredListing[], grants: Set<FieldGroup>): Promise<MediaUrls> =>
+  grants.has("media_original") ? mediaUrlsWithOriginals(rows.flatMap((row) => originalPaths(row.media))) : Promise.resolve(mediaUrls);
 
 /**
  * For a feed page: one listing that cannot be serialised must not take the
  * partner's whole feed down with it. It is left out, and said so loudly —
  * the partner keeps syncing everything else while the listing is fixed.
  */
-function serveOrSkip(row: StoredListing, domain: string, grants: Set<FieldGroup>): OpenYachtListing | null {
+function serveOrSkip(row: StoredListing, domain: string, grants: Set<FieldGroup>, urls: MediaUrls): OpenYachtListing | null {
   try {
-    return serve(row, domain, grants);
+    return serve(row, domain, grants, urls);
   } catch (error) {
     if (!(error instanceof ListingError)) throw error;
     console.error(`[openyacht] listing ${row.uuid} left out of the feed: ${error.message}`);
@@ -87,11 +92,13 @@ export const supabaseFeedSource: ListingFeedSource = {
     const hasMore = (data as FeedRow[]).length > query.pageSize;
     const stored = await loadListings(rows.filter((row) => row.kind === "listing").map((row) => row.listing_id));
 
+    const urls = await urlsFor([...stored.values()], partner.grants);
+
     const items: ServedItem[] = [];
     for (const row of rows) {
       const listing = stored.get(row.listing_id);
       if (row.kind === "listing" && listing !== undefined) {
-        const item = serveOrSkip(listing, domain, partner.grants);
+        const item = serveOrSkip(listing, domain, partner.grants, urls);
         if (item !== null) items.push(item);
       } else if (row.kind === "tombstone")
         items.push(serializeTombstone(domain, row.listing_uuid, row.tombstone_status ?? "withdrawn", new Date(row.tombstone_at ?? row.effective_at)));
@@ -116,6 +123,6 @@ export const supabaseFeedSource: ListingFeedSource = {
     // clean-up does not meet a 404; after that, 410 Gone.
     const ended = listing.status === "sold" || listing.status === "withdrawn";
     if (ended && Date.now() - new Date(listing.federation_updated_at).getTime() > RETENTION_MS) return "gone";
-    return serve(listing, domain, partner.grants);
+    return serve(listing, domain, partner.grants, await urlsFor([listing], partner.grants));
   },
 };

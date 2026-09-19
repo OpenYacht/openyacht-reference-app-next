@@ -61,7 +61,7 @@ export interface FederationDeps {
 // A flag is switched on by the change that makes the feature work, never ahead
 // of it. `charter_listings` says the node implements the charter block of the
 // wire schema — not that it holds any charter inventory.
-const FEATURES = { subscriptions: false, charter_listings: true, media_hashes: false };
+const FEATURES = { subscriptions: false, charter_listings: true, media_hashes: true };
 const LIMITS = { page_size_max: 100, rate_per_hour: 500 };
 const PAGE_SIZE_DEFAULT = 50;
 

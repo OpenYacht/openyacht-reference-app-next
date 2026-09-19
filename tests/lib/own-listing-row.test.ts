@@ -5,7 +5,16 @@ import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 import { beforeAll, describe, expect, it } from "vitest";
 import { FIELD_GROUPS, serializeListing } from "@/federation";
-import { toOwnListing, type ListingRow, type VesselRow } from "@/lib/listings/own-listing-row";
+import { ListingError } from "@/federation";
+import {
+  originalPaths,
+  storedFiles,
+  toOwnListing,
+  type ListingRow,
+  type MediaUrls,
+  type StoredImage,
+  type VesselRow,
+} from "@/lib/listings/own-listing-row";
 
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 addFormats(ajv);
@@ -62,8 +71,15 @@ const row = (overrides: Partial<ListingRow> = {}): ListingRow => ({
   ...overrides,
 });
 
-const serve = (listing: ListingRow, history: Parameters<typeof toOwnListing>[2] = []) =>
-  serializeListing(toOwnListing(listing, vessel, history), { domain: "node.example", grants: new Set(FIELD_GROUPS) });
+// Paths become URLs when a listing is served. Originals get a URL only when
+// one was minted for the request: here, always.
+const urls: MediaUrls = {
+  served: (path) => `https://files.example/public/${path}`,
+  original: (path) => `https://files.example/signed/${path}?token=t`,
+};
+
+const serve = (listing: ListingRow, history: Parameters<typeof toOwnListing>[2] = [], grants: readonly string[] = FIELD_GROUPS, mediaUrls = urls) =>
+  serializeListing(toOwnListing(listing, vessel, history, mediaUrls), { domain: "node.example", grants: new Set(grants) as never });
 
 function expectValid(document: unknown) {
   const validate = ajv.getSchema("https://openyacht.org/schemas/v1/listing.schema.json")!;
@@ -124,5 +140,91 @@ describe("a stored listing becomes a schema-valid wire document", () => {
       marina: null,
       coordinates: { lat: 39.57, lon: 2.65 },
     });
+  });
+});
+
+describe("stored media becomes wire media", () => {
+  const UUID = "018f6d2e-9f0a-7cc3-a1b2-3c4d5e6f7a8b";
+  const image = (id: string, extra: Partial<StoredImage> = {}): StoredImage => ({
+    id,
+    path: `${UUID}/${id}/derived.jpg`,
+    thumbnail_path: `${UUID}/${id}/thumbnail.jpg`,
+    sha256: "d".repeat(64),
+    width: 1920,
+    height: 1280,
+    original: { path: `${UUID}/${id}/original.jpg`, sha256: "0".repeat(64), width: 4000, height: 2667 },
+    ...extra,
+  });
+  const media = {
+    profile: image("hero", { caption: "At anchor" }),
+    gallery: [image("b", { sort: 2, category: "interior" }), image("a", { sort: 1 })],
+    layouts: [image("ga", { sort: 1, original: null })],
+    videos: [{ id: "v", url: "https://video.example/watch/1", sort: 1 }],
+    tours: [],
+    documents: [{ id: "d", path: `${UUID}/d/brochure.pdf`, sha256: "b".repeat(64), caption: "Brochure", sort: 1 }],
+  };
+
+  it("is schema-valid, in sort order, and carries none of the node's bookkeeping", () => {
+    const document = serve(row({ media }));
+    expectValid(document);
+    expect(document.media.gallery.map((item) => item.url)).toEqual([
+      `https://files.example/signed/${UUID}/a/original.jpg?token=t`,
+      `https://files.example/signed/${UUID}/b/original.jpg?token=t`,
+    ]);
+    expect(JSON.stringify(document.media)).not.toMatch(/"(id|path|thumbnail_path|original)"/);
+    expect(document.media.videos).toEqual([{ url: "https://video.example/watch/1", sha256: null, caption: null, sort: 1 }]);
+    expect(document.media.documents[0]).toEqual({
+      url: `https://files.example/public/${UUID}/d/brochure.pdf`,
+      sha256: "b".repeat(64),
+      caption: "Brochure",
+      sort: 1,
+    });
+  });
+
+  it("LS-14: with media_original, the URL, hash and dimensions are the original's; without it, the derived rendition's", () => {
+    const granted = serve(row({ media })).media.profile!;
+    expect(granted).toMatchObject({
+      url: `https://files.example/signed/${UUID}/hero/original.jpg?token=t`,
+      sha256: "0".repeat(64),
+      width: 4000,
+      height: 2667,
+    });
+
+    const withheld = serve(
+      row({ media }),
+      [],
+      FIELD_GROUPS.filter((group) => group !== "media_original"),
+    ).media.profile!;
+    expect(withheld).toMatchObject({
+      url: `https://files.example/public/${UUID}/hero/derived.jpg`,
+      sha256: "d".repeat(64),
+      width: 1920,
+      height: 1280,
+    });
+  });
+
+  it("LS-8 / LS-16: the thumbnail is always present on the profile, and always a rendition of the same image", () => {
+    const { profile, gallery } = serve(row({ media })).media;
+    expect(profile!.thumbnail_url).toBe(`https://files.example/public/${UUID}/hero/thumbnail.jpg`);
+    expect(gallery[0]!.thumbnail_url).toBe(`https://files.example/public/${UUID}/a/thumbnail.jpg`);
+  });
+
+  it("falls back to the derived rendition — hash and all — when no URL was minted for an original", () => {
+    const profile = serve(row({ media }), [], FIELD_GROUPS, { ...urls, original: () => null }).media.profile!;
+    expect(profile).toMatchObject({ url: `https://files.example/public/${UUID}/hero/derived.jpg`, sha256: "d".repeat(64), width: 1920 });
+  });
+
+  it("LS-8: imagery with no profile image is not served — no first-gallery-image guess", () => {
+    expect(() => serve(row({ media: { ...media, profile: null } }))).toThrow(ListingError);
+    expectValid(serve(row({ media: { videos: media.videos } })));
+  });
+
+  it("lists the files behind a media block, by bucket", () => {
+    expect(originalPaths(media)).toEqual([`${UUID}/hero/original.jpg`, `${UUID}/b/original.jpg`, `${UUID}/a/original.jpg`]);
+    const files = storedFiles(media);
+    expect(files.originals).toHaveLength(3);
+    expect(files.served).toHaveLength(9);
+    expect(files.served).toContain(`${UUID}/d/brochure.pdf`);
+    expect(storedFiles({})).toEqual({ served: [], originals: [] });
   });
 });

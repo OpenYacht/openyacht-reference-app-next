@@ -373,6 +373,12 @@ function serializeMedia(media: OwnListing["media"], granted: { original: boolean
     const completed = complete(template, item as Sparse<T>);
     return granted.original && item.original ? { ...completed, ...item.original } : completed;
   };
+  // LS-8, the other half: imagery without a chosen profile image is not
+  // served. Promoting the first gallery image here would be the guess the rule
+  // exists to prevent — the authority chooses the hero shot, explicitly.
+  if (!media.profile && (media.gallery?.length || media.layouts?.length)) {
+    throw new ListingError("The listing has gallery or layout images and no profile image (LS-8).");
+  }
   return {
     // LS-8: a listing with no imagery has `profile: null` — never a placeholder.
     profile: media.profile ? pick(TEMPLATES.profile, media.profile) : null,
