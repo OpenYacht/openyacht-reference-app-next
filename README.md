@@ -38,6 +38,10 @@ interfaces; Next.js and Supabase are only the harness demonstrated around it.
 | `sync.ts`, `feed.ts`                   | Cold sync and `updated_since` polling, tombstones, pagination (API-2, API-3, API-7, API-8, ID-7)                       |
 | `copies.ts`                            | Sanitising on receipt, the acceptance policy, vessel-identity conflicts, registry slugs (ID-3 – ID-10, LS-5, LS-12)    |
 | `staleness.ts`                         | The 7-day stale flag, the 30-day hide, and polling backoff (FP-15)                                                     |
+| `own-listings.ts`                      | Serialising this node's listings: complete objects, field-group gating, price history, tombstones (LS-1 – LS-14, ID-1) |
+| `listings-endpoint.ts`                 | The partner feed: query parsing, the opaque keyset cursor, the collection envelope (API-2, API-5)                      |
+| `rate-limit.ts`                        | A token bucket, the limiter interface, and an in-process limiter (API-9)                                               |
+| `replay-guard.ts`                      | Refusing a verified request seen before, inside the timestamp window                                                   |
 | `documents.ts`                         | `capabilities` and `health` (API-6)                                                                                    |
 | `errors.ts`                            | The error envelope and its HTTP status mapping (API-9)                                                                 |
 | `identity.ts`                          | Identity configuration that fails loudly, and the single-host guard                                                    |
@@ -148,11 +152,36 @@ Every outbound request goes through a guard that refuses private, loopback and u
 therefore be a real, publicly reachable node — and so must this one, since the partner verifies your requests by fetching _your_ discovery
 document.
 
+## Your own listings
+
+Listings are created under **Listings**. A listing's UUID is minted at creation and its type — sale or charter — is chosen then and never
+changes; a draft is served to nobody. From active it moves to under offer, sold or withdrawn, and the last two are final: partners are sent a
+tombstone and remove their copies.
+
+- **Sharing** is per listing: every verified partner, selected partners, or nobody. Taking a listing away from a partner sends that partner a
+  withdrawal and tells nobody else anything.
+- **Field groups** are per partner: pricing, exact location, original media, documents, vessel identifiers, price history. What is not granted
+  is withheld here, before a listing is sent. Changing a partner's grants re-sends it the listings it can see, in the new form.
+- **Media.** An uploaded image is stored as the three files partners are served — an original, a derived rendition and a thumbnail — each
+  re-encoded without metadata, so a photograph's GPS position never reaches a partner. `sha256`, `width` and `height` describe the bytes
+  actually served. Derived files sit in a public bucket under unguessable paths; originals in a private one, reached through URLs that expire
+  after a week and are minted only for partners granted original media. The buckets and their policies are created by the migrations. A
+  listing with gallery images must have a profile image, chosen explicitly; one with no imagery says so — there are no placeholders.
+- **Rate limits.** Each partner may make 500 signed requests an hour, all of which can be spent in one burst — a first full sync — and beyond
+  that is answered `429` with `Retry-After`. A partner with a large inventory to fetch can be given a higher figure on its screen.
+
+### Rotating the signing key
+
+On the dashboard, for a super admin. A **routine** rotation starts signing with a new key at once and keeps the old one published for 48 hours,
+so no partner meets a key it cannot find; nobody needs to be told. An **emergency** rotation revokes every earlier key immediately and destroys
+its private half; it asks for a note, which is kept with the revoked key. Either way, a partner that _pinned_ your key will refuse the new one
+until its administrator confirms it — tell those partners first.
+
 ## Tests
 
 ```bash
 pnpm test      # unit lane: the federation core, route handlers and the sanitiser. No database, no network.
-pnpm test:db   # database lane: RLS policies, the setup function, the Vault round-trip.
+pnpm test:db   # database lane: RLS and storage policies, the SQL functions, the partner feed, the Vault round-trip.
 ```
 
 The database lane runs against `POSTGRES_URL_NON_POOLING`. Every test runs inside a transaction that is rolled back, so it is safe to point at
