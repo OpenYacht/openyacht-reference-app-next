@@ -387,3 +387,32 @@ describe("choosing partners to share with", () => {
     expect(await names(VIEWER)).toEqual([]);
   });
 });
+
+describe("the time a page reports as generated_at is safe to poll from", () => {
+  const watermark = () => client.query<{ at: Date }>("select public.feed_watermark() as at").then((r) => r.rows[0]!.at);
+
+  it("comes from the database's clock, a few seconds in the past", async () => {
+    const { rows } = await client.query<{ behind: number }>(
+      "select extract(epoch from clock_timestamp() - public.feed_watermark())::float as behind",
+    );
+    expect(rows[0]!.behind).toBeGreaterThan(4);
+    expect(rows[0]!.behind).toBeLessThan(10);
+  });
+
+  it("a change made after a poll is in the next poll, whatever the application server's clock says", async () => {
+    const listing = await createListing();
+    const polledFrom = await watermark();
+    // Shared away and back, and edited: each stamped by the database, moments after that poll.
+    await share(listing.id, "selected", [beta]);
+    await share(listing.id, "selected", [alpha, beta]);
+    await client.query("update public.listings set summary = 'Reduced.' where id = $1", [listing.id]);
+    expect((await feed(alpha, { since: polledFrom.toISOString() })).map((row) => row.kind)).toEqual(["listing"]);
+  });
+
+  it.each(["anon", "authenticated"])("is not callable by %s", async (role) => {
+    await client.query("savepoint as_role");
+    await client.query(`set local role ${role}`);
+    await expect(client.query("select public.feed_watermark()")).rejects.toThrow(/permission denied/);
+    await client.query("rollback to savepoint as_role");
+  });
+});

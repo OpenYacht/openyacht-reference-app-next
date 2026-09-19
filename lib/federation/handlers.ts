@@ -311,8 +311,8 @@ export function createFederationHandlers(deps: FederationDeps) {
           if (!(error instanceof FeedQueryError)) throw error;
           return errorResponse("VALIDATION_ERROR", error.message);
         }
-        const { items, next } = await deps.listings.page(partner.domain, query);
-        return json(buildCollection(items, next, deps.clock.now()));
+        const { items, next, generatedAt } = await deps.listings.page(partner.domain, query);
+        return json(buildCollection(items, next, generatedAt));
       }),
 
     /**

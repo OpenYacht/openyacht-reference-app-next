@@ -29,6 +29,8 @@ const DOMAIN = "node.brokerage.example";
 const PARTNER = "partner.example";
 const NOW = new Date("2026-09-18T12:00:00Z");
 const clock = { now: () => NOW };
+// What storage says the page was generated at: its own clock, and deliberately not this server's.
+const GENERATED_AT = new Date("2026-09-18T11:59:52Z");
 const UUID = "018f6d2e-9f0a-7cc3-a1b2-3c4d5e6f7a8b";
 const LIMITS = { pageSizeDefault: 50, pageSizeMax: 100 };
 
@@ -83,7 +85,7 @@ function setup(trustLevel: TrustLevel, source: Partial<ListingFeedSource> = {}, 
     listings: {
       page: async (domain, query) => {
         queries.push({ domain, query });
-        return { items: [listing], next: null };
+        return { items: [listing], next: null, generatedAt: GENERATED_AT };
       },
       one: async () => null,
       ...source,
@@ -150,13 +152,14 @@ describe("GET /openyacht/v1/listings", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(valid("collection", body)).toEqual([]);
-    expect(body.meta).toEqual({ generated_at: "2026-09-18T12:00:00Z", protocol_version: "1.0" });
+    // Storage's time, not this server's clock: a consumer polls from it next.
+    expect(body.meta).toEqual({ generated_at: "2026-09-18T11:59:52Z", protocol_version: "1.0" });
     expect(queries).toEqual([{ domain: PARTNER, query: { since: "2026-08-01T00:00:00Z", after: null, pageSize: 50 } }]);
   });
 
   it("next_cursor is present while there is more, and absent — not null — on the last page", async () => {
     const position = { at: "2026-09-18T20:41:07.456123Z", id: "42" };
-    const more = setup("verified", { page: async () => ({ items: [listing], next: position }) });
+    const more = setup("verified", { page: async () => ({ items: [listing], next: position, generatedAt: GENERATED_AT }) });
     const first = await (await more.handlers.listings(signedGet("/openyacht/v1/listings"))).json();
     expect(decodeCursor(first.meta.next_cursor)).toEqual(position);
     expect(valid("collection", first)).toEqual([]);
@@ -174,7 +177,7 @@ describe("GET /openyacht/v1/listings", () => {
 
   it("serves listings and tombstones in one page", async () => {
     const tombstone = serializeTombstone(DOMAIN, "018f6d2e-9f0a-7cc3-a1b2-000000000002", "sold", NOW);
-    const { handlers } = setup("verified", { page: async () => ({ items: [listing, tombstone], next: null }) });
+    const { handlers } = setup("verified", { page: async () => ({ items: [listing, tombstone], next: null, generatedAt: GENERATED_AT }) });
     const body = await (await handlers.listings(signedGet("/openyacht/v1/listings"))).json();
     expect(valid("collection", body)).toEqual([]);
     expect(body.data.map((item: { tombstone?: boolean }) => item.tombstone === true)).toEqual([false, true]);

@@ -23,8 +23,15 @@ export type ServedItem = OpenYachtListing | OpenYachtTombstone;
 
 /** What the endpoint needs from storage. The host implements it; tests fake it. */
 export interface ListingFeedSource {
-  /** One page for one partner, already filtered and gated for it (API-5). `next` is null on the last page. */
-  page(partnerDomain: string, query: FeedQuery): Promise<{ items: ServedItem[]; next: FeedPosition | null }>;
+  /**
+   * One page for one partner, already filtered and gated for it (API-5). `next` is null on the last page.
+   *
+   * `generatedAt` is what the page reports as `meta.generated_at`. Consumers
+   * send it back as their next `updated_since`, so it must come from the same
+   * clock that stamps listings — the storage's, not the application server's —
+   * and be taken before the page is read, never after: see `buildCollection`.
+   */
+  page(partnerDomain: string, query: FeedQuery): Promise<{ items: ServedItem[]; next: FeedPosition | null; generatedAt: Date }>;
   /**
    * One listing by UUID. `null` covers every reason a partner may not have it —
    * unshared, draft, unknown — so that probing UUIDs teaches nothing. `"gone"`
@@ -80,13 +87,19 @@ export function parseFeedQuery(params: URLSearchParams, limits: { pageSizeDefaul
   return { since, after: cursor === null ? null : decodeCursor(cursor), pageSize };
 }
 
-export function buildCollection(items: ServedItem[], next: FeedPosition | null, now: Date): OpenYachtListingsCollection {
+/**
+ * `generatedAt` is a watermark in all but name: a consumer's next poll asks
+ * for everything since it. It must therefore never be later than the stamp of
+ * a change this page could have missed. A clock a few seconds ahead of the one
+ * that stamps listings is enough to lose changes for good.
+ */
+export function buildCollection(items: ServedItem[], next: FeedPosition | null, generatedAt: Date): OpenYachtListingsCollection {
   return {
     data: items,
     meta: {
       // Absent — not null — on the last page: the one deliberate absence in the protocol.
       ...(next === null ? {} : { next_cursor: encodeCursor(next) }),
-      generated_at: toWireTimestamp(now),
+      generated_at: toWireTimestamp(generatedAt),
       protocol_version: PROTOCOL_VERSION,
     },
   };

@@ -39,6 +39,12 @@ async function partnerByDomain(domain: string): Promise<{ id: number; grants: Se
   return data === null ? null : { id: data.id, grants: new Set(data.field_groups as FieldGroup[]) };
 }
 
+async function feedWatermark(): Promise<Date> {
+  const { data, error } = await serviceClient().rpc("feed_watermark");
+  if (error) throw new Error(`Cannot read the feed clock: ${error.message}`);
+  return new Date(data as string);
+}
+
 async function loadListings(ids: number[]): Promise<Map<number, StoredListing>> {
   if (ids.length === 0) return new Map();
   // One query for the page, not one per listing.
@@ -75,8 +81,11 @@ function serveOrSkip(row: StoredListing, domain: string, grants: Set<FieldGroup>
 export const supabaseFeedSource: ListingFeedSource = {
   async page(partnerDomain: string, query: FeedQuery) {
     const { domain } = parseNodeIdentity(process.env);
-    const partner = await partnerByDomain(partnerDomain);
-    if (partner === null) return { items: [], next: null };
+    // Read before the page is, from the clock that stamps listings: a partner
+    // polls from this time next, so it must not be later than anything the
+    // page could have missed.
+    const [partner, generatedAt] = await Promise.all([partnerByDomain(partnerDomain), feedWatermark()]);
+    if (partner === null) return { items: [], next: null, generatedAt };
 
     // One row more than asked for: its presence is how the last page is recognised.
     const { data, error } = await serviceClient().rpc("feed_for_partner", {
@@ -105,7 +114,7 @@ export const supabaseFeedSource: ListingFeedSource = {
     }
     const last = rows.at(-1);
     const next: FeedPosition | null = hasMore && last !== undefined ? { at: last.effective_at, id: String(last.listing_id) } : null;
-    return { items, next };
+    return { items, next, generatedAt };
   },
 
   async one(partnerDomain: string, uuid: string) {
