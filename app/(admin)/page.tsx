@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, Chip } from 
 import { IdentityConfigError, parseNodeIdentity, WELL_KNOWN_PATH } from "@/federation";
 import { requireSession } from "@/lib/auth/session";
 import { userClient } from "@/lib/supabase/server";
+import { KeyRotation } from "./keys/key-rotation";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function DashboardPage() {
   // only, so for anyone else `keys` is simply empty.
   const [{ data: node }, { data: keys }] = await Promise.all([
     supabase.from("node_settings").select("node_uuid, identity_domain, identity_mode, setup_completed_at").maybeSingle(),
-    supabase.from("federation_keys").select("key_id, status, created_at").order("id", { ascending: false }),
+    supabase.from("federation_keys").select("key_id, status, created_at, overlap_ends_at, rotation_note").order("id", { ascending: false }),
   ]);
 
   let identityProblems: string[] = [];
@@ -81,9 +82,16 @@ export default async function DashboardPage() {
                       <span className="font-mono">{key.key_id}</span>
                       <Chip>{key.status}</Chip>
                       <span className="text-muted">{new Date(key.created_at).toISOString().slice(0, 10)}</span>
+                      {key.overlap_ends_at !== null && (
+                        <span className="text-muted">
+                          published until {new Date(key.overlap_ends_at).toISOString().slice(0, 16).replace("T", " ")} UTC
+                        </span>
+                      )}
+                      {key.rotation_note !== null && <span className="text-muted">— {key.rotation_note}</span>}
                     </li>
                   ))}
                 </ul>
+                <KeyRotation />
               </CardContent>
             </Card>
           )}

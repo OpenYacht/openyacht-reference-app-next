@@ -9,6 +9,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { optionalEnv } from "@/lib/env";
 import { syncDuePartners } from "@/lib/federation/consumer";
 import { isSetupComplete } from "@/lib/node/setup-state";
+import { serviceClient } from "@/lib/supabase/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,12 @@ export async function POST(request: Request) {
   const presented = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
   if (!timingSafeEqual(digest(presented), digest(secret))) return new Response(null, { status: 401 });
   if (!(await isSetupComplete())) return Response.json({ error: "Setup has not been completed." }, { status: 503 });
+
+  // The timer that drives syncing also ends key-rotation overlaps that have run
+  // out. Publication never waits for this — it is decided by time — but the
+  // revoked key's seed is destroyed here.
+  const { error } = await serviceClient().rpc("expire_retiring_keys");
+  if (error) console.error(`[openyacht] cannot expire retiring keys: ${error.message}`);
 
   const force = new URL(request.url).searchParams.get("force") === "1";
   return Response.json({ results: await syncDuePartners({ force }) });

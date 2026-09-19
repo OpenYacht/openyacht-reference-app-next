@@ -31,13 +31,11 @@ export const supabaseNodeStore: NodeStore = {
   },
 
   async listPublishedKeys() {
-    const { data, error } = await serviceClient()
-      .from("federation_keys")
-      .select("key_id, public_key, created_at")
-      .in("status", ["active", "retiring"])
-      .order("id", { ascending: false });
-    if (error) throw new NodeStoreError(`Cannot read federation_keys: ${error.message}`);
-    return data.map((row) => ({
+    // Decided in the database, by time: a retiring key stops being published
+    // when its overlap ends, whether or not anything has revoked it yet.
+    const { data, error } = await serviceClient().rpc("published_signing_keys");
+    if (error) throw new NodeStoreError(`Cannot read the published keys: ${error.message}`);
+    return (data as { key_id: string; public_key: string; created_at: string }[]).map((row) => ({
       keyId: row.key_id,
       publicKey: row.public_key,
       createdAt: toWireTimestamp(new Date(row.created_at)),

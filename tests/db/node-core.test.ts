@@ -137,7 +137,7 @@ describe("FP-4 the private key is encrypted at rest", () => {
       "select column_name from information_schema.columns where table_schema = 'public' and table_name = 'federation_keys'",
     );
     expect(rows.map((row) => row.column_name).sort()).toEqual(
-      ["created_at", "id", "key_id", "private_key_secret_id", "public_key", "retired_at", "status"].sort(),
+      ["created_at", "id", "key_id", "overlap_ends_at", "private_key_secret_id", "public_key", "retired_at", "rotation_note", "status"].sort(),
     );
   });
 

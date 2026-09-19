@@ -11,10 +11,10 @@ FP-7.
 
 > **Status: in progress.** Built so far: the federation core (keys, signing, verification, discovery) and first-run setup; the **consumer
 > role** — adding partners, the signed partnership request, cold sync and `updated_since` polling, tombstones, copies with provenance, a
-> per-partner acceptance policy, and receiving signed partnership requests from nodes that contact this one first; and the **authority
-> role** — this node's own sale and charter listings, per-listing sharing, per-partner field groups, the partner feed with tombstones and an
-> opaque cursor, and listing media (renditions and SHA-256 hashes made at upload, originals behind expiring URLs). Not built yet: key
-> rotation and per-partner rate limiting.
+> per-partner acceptance policy, and receiving signed partnership requests from nodes that contact this one first; the **authority role** —
+> this node's own sale and charter listings, per-listing sharing, per-partner field groups, the partner feed with tombstones and an opaque
+> cursor, and listing media (renditions and SHA-256 hashes made at upload, originals behind expiring URLs); and **key rotation**, routine
+> with a 48-hour overlap and emergency without one. Not built yet: per-partner rate limiting.
 
 ## The part you can lift: `federation/`
 
