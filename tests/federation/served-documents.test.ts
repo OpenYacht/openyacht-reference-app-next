@@ -6,7 +6,15 @@ import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { parse as parseYaml } from "yaml";
-import { deriveKeyId, decodePublicKey, IdentityConfigError, parseNodeIdentity, parseWellKnownDocument, type OwnPublishedKey } from "@/federation";
+import {
+  deriveKeyId,
+  decodePublicKey,
+  IdentityConfigError,
+  InMemoryRateLimiter,
+  parseNodeIdentity,
+  parseWellKnownDocument,
+  type OwnPublishedKey,
+} from "@/federation";
 import { createFederationHandlers } from "@/lib/federation/handlers";
 import type { NodeState } from "@/lib/node/store";
 import { TEST_KEY } from "./vectors";
@@ -40,7 +48,7 @@ function expectValid(schemaId: string, document: unknown) {
 const publishedKey: OwnPublishedKey = { keyId: TEST_KEY.keyId, publicKey: TEST_KEY.publicKey, createdAt: "2026-09-18T11:00:00Z" };
 const readyState: NodeState = { nodeUuid: "018f3c2e-4b6a-7d8e-9f01-23456789abcd", identityDomain: DOMAIN, setupCompleted: true };
 
-function handlers(options: { env?: Record<string, string | undefined>; state?: NodeState; keys?: OwnPublishedKey[] } = {}) {
+function handlers(options: { env?: Record<string, string | undefined>; state?: NodeState; keys?: OwnPublishedKey[]; limitDiscovery?: boolean } = {}) {
   const env = options.env ?? {
     OPENYACHT_DOMAIN: DOMAIN,
     OPENYACHT_NODE_NAME: "Example Yacht Brokerage",
@@ -52,6 +60,7 @@ function handlers(options: { env?: Record<string, string | undefined>; state?: N
     clock: { now: () => NOW },
     software: "openyacht-reference-next/0.1.0",
     requestId: () => "req_test",
+    discoveryLimiter: options.limitDiscovery ? new InMemoryRateLimiter({ now: () => NOW }) : undefined,
   });
 }
 
@@ -118,6 +127,33 @@ describe("FP-1 / FP-5 GET /.well-known/openyacht", () => {
       expect(document.node.website).toBeNull();
       expectValid(`${SCHEMA_BASE}well-known.schema.json`, document);
     }
+  });
+});
+
+describe("the discovery document is rate-limited per consumer", () => {
+  const from = (forwardedFor: string) =>
+    new Request(`https://${DOMAIN}/.well-known/openyacht`, { headers: { host: DOMAIN, "x-forwarded-for": forwardedFor } });
+
+  it("allows a burst, then answers 429 with Retry-After to that address alone", async () => {
+    const { wellKnown } = handlers({ limitDiscovery: true });
+    for (let request = 0; request < 10; request++) expect((await wellKnown(from("203.0.113.7"))).status).toBe(200);
+
+    const refused = await wellKnown(from("203.0.113.7"));
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get("retry-after")).toBe("60");
+    expectValid(`${SCHEMA_BASE}error.schema.json`, await refused.json());
+    expect((await wellKnown(from("203.0.113.8"))).status).toBe(200);
+  });
+
+  it("counts the address the nearest proxy reported, not one the client wrote in front of it", async () => {
+    const { wellKnown } = handlers({ limitDiscovery: true });
+    for (let request = 0; request < 10; request++) await wellKnown(from(`198.51.100.${request}, 203.0.113.7`));
+    expect((await wellKnown(from("198.51.100.99, 203.0.113.7"))).status).toBe(429);
+  });
+
+  it("does not count a request that carries no address at all", async () => {
+    const { wellKnown } = handlers({ limitDiscovery: true });
+    for (let request = 0; request < 25; request++) expect((await wellKnown(get("/.well-known/openyacht"))).status).toBe(200);
   });
 });
 

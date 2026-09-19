@@ -15,6 +15,7 @@ export * from "./outbound-guard";
 export * from "./own-listings";
 export * from "./partners";
 export * from "./ports";
+export * from "./rate-limit";
 export * from "./replay-guard";
 export * from "./signed-client";
 export * from "./signer";

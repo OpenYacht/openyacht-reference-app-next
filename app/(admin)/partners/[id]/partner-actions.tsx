@@ -19,6 +19,7 @@ import {
   refreshKeysAction,
   removePartnerAction,
   setFieldGroupsAction,
+  setRateLimitAction,
   setPolicyAction,
   setTrustAction,
   syncNowAction,
@@ -145,6 +146,22 @@ export function FieldGroupsForm({ partnerId, granted }: { partnerId: string; gra
       </div>
       <SubmitButton variant="secondary" className="self-start">
         Save
+      </SubmitButton>
+    </ActionForm>
+  );
+}
+
+export function RateLimitForm({ partnerId, ratePerHour, defaultPerHour }: { partnerId: string; ratePerHour: number | null; defaultPerHour: number }) {
+  return (
+    <ActionForm action={setRateLimitAction}>
+      <Id partnerId={partnerId} />
+      <TextField name="rate_per_hour" defaultValue={ratePerHour === null ? "" : String(ratePerHour)} className="max-w-xs">
+        <Label>Requests per hour</Label>
+        <Input inputMode="numeric" placeholder={String(defaultPerHour)} />
+        <Description>Empty for the default of {defaultPerHour}. The whole figure can be spent in one burst, then refills evenly.</Description>
+      </TextField>
+      <SubmitButton variant="secondary" className="self-start">
+        Save limit
       </SubmitButton>
     </ActionForm>
   );

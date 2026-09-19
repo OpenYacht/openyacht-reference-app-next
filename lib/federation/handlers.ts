@@ -23,6 +23,8 @@ import {
   type ListingFeedSource,
   type NodeIdentity,
   type PartnerRecord,
+  type RateLimit,
+  type RateLimiter,
   type VerificationResult,
 } from "@/federation";
 import type { NodeStore } from "@/lib/node/store";
@@ -56,13 +58,25 @@ export interface FederationDeps {
   inbound?: InboundFederation;
   /** This node's own listings, as one partner may see them. */
   listings?: ListingFeedSource;
+  /** Counts signed requests per partner. Absent in tests that are not about limits. */
+  rateLimiter?: RateLimiter;
+  /** Counts discovery requests per client address. */
+  discoveryLimiter?: RateLimiter;
 }
 
 // A flag is switched on by the change that makes the feature work, never ahead
 // of it. `charter_listings` says the node implements the charter block of the
 // wire schema — not that it holds any charter inventory.
 const FEATURES = { subscriptions: false, charter_listings: true, media_hashes: true };
-const LIMITS = { page_size_max: 100, rate_per_hour: 500 };
+/** Signed requests a partner may make in an hour, unless it has been given a figure of its own. */
+export const DEFAULT_RATE_PER_HOUR = 500;
+const LIMITS = { page_size_max: 100, rate_per_hour: DEFAULT_RATE_PER_HOUR };
+// What is advertised is what is enforced. The bucket is as large as the hourly
+// rate, so a partner's first full sync can spend an hour's allowance at once.
+const PARTNER_RATE: RateLimit = { capacity: LIMITS.rate_per_hour, perHour: LIMITS.rate_per_hour };
+// The discovery document is public and unauthenticated, and partners cache it
+// for a day: one a minute is ample, with room for a burst of retries.
+const DISCOVERY_RATE: RateLimit = { capacity: 10, perHour: 60 };
 const PAGE_SIZE_DEFAULT = 50;
 
 // A discovery document cached by an intermediary would defeat the fresh
@@ -100,6 +114,28 @@ export function createFederationHandlers(deps: FederationDeps) {
 
   const errorResponse = (code: ErrorCode, message: string, requestId = deps.requestId(), details?: Record<string, unknown>) =>
     json(buildErrorEnvelope({ code, message, details, requestId, now: deps.clock.now() }), ERROR_STATUS[code]);
+
+  /** API-9: 429, the error envelope, and Retry-After in whole seconds. */
+  const rateLimited = (retryAfterSeconds: number, requestId = deps.requestId()) =>
+    json(
+      buildErrorEnvelope({
+        code: "RATE_LIMITED",
+        message: `Too many requests. Try again in ${retryAfterSeconds} seconds.`,
+        details: { retry_after_seconds: retryAfterSeconds },
+        requestId,
+        now: deps.clock.now(),
+      }),
+      ERROR_STATUS.RATE_LIMITED,
+      { "retry-after": String(retryAfterSeconds) },
+    );
+
+  /**
+   * The address a discovery request came from, as the nearest proxy reported
+   * it: the last entry of X-Forwarded-For. Earlier entries are whatever the
+   * client chose to send. With no such header there is nothing to tell one
+   * consumer from another, and the request is not counted.
+   */
+  const clientAddress = (request: Request) => request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() || null;
 
   /**
    * The gate in front of every federation route:
@@ -188,6 +224,11 @@ export function createFederationHandlers(deps: FederationDeps) {
         );
       }
 
+      // Counted only now, against a sender whose signature has verified: were
+      // the claimed domain enough, anyone could spend a partner's allowance.
+      const rate = await deps.rateLimiter?.take(result.partner.domain, PARTNER_RATE);
+      if (rate !== undefined && !rate.allowed) return finish(rateLimited(rate.retryAfterSeconds, requestId), "RATE_LIMITED", result.partner.domain);
+
       // FP-13: until a person here approves the partner, nothing is shared with it.
       if (result.partner.trustLevel !== "verified" && !options.allowProvisional) {
         return finish(
@@ -203,8 +244,11 @@ export function createFederationHandlers(deps: FederationDeps) {
   return {
     /** GET /.well-known/openyacht (FP-1, FP-5). */
     wellKnown: (request: Request) =>
-      guarded(request, async ({ identity, nodeUuid }) =>
-        json(
+      guarded(request, async ({ identity, nodeUuid }) => {
+        const address = clientAddress(request);
+        const rate = address === null ? undefined : await deps.discoveryLimiter?.take(address, DISCOVERY_RATE);
+        if (rate !== undefined && !rate.allowed) return rateLimited(rate.retryAfterSeconds);
+        return json(
           buildWellKnownDocument({
             identity,
             nodeUuid,
@@ -214,8 +258,8 @@ export function createFederationHandlers(deps: FederationDeps) {
             optionalEndpoints: { partners: deps.inbound !== undefined },
             now: deps.clock.now(),
           }),
-        ),
-      ),
+        );
+      }),
 
     /** GET /openyacht/v1/capabilities — unsigned (API-6). */
     capabilities: (request: Request) => guarded(request, () => json(buildCapabilities({ features: FEATURES, limits: LIMITS }))),

@@ -11,6 +11,7 @@ import {
   encodeCursor,
   FeedQueryError,
   generateKeypair,
+  InMemoryRateLimiter,
   parseFeedQuery,
   serializeTombstone,
   Signer,
@@ -19,6 +20,7 @@ import {
   type ListingFeedSource,
   type OpenYachtListing,
   type PartnerRecord,
+  type RateLimiter,
   type TrustLevel,
 } from "@/federation";
 import { createFederationHandlers } from "@/lib/federation/handlers";
@@ -48,7 +50,7 @@ const example = JSON.parse(readFileSync(join(process.cwd(), "protocol/examples/v
 const listing = { ...example, id: `https://${DOMAIN}/openyacht/v1/listings/${UUID}` };
 const keys = generateKeypair();
 
-function setup(trustLevel: TrustLevel, source: Partial<ListingFeedSource> = {}) {
+function setup(trustLevel: TrustLevel, source: Partial<ListingFeedSource> = {}, rateLimiter?: RateLimiter) {
   const partner: PartnerRecord = {
     domain: PARTNER,
     nodeUuid: "018f3c2e-4b6a-7d8e-9f01-23456789abcd",
@@ -77,6 +79,7 @@ function setup(trustLevel: TrustLevel, source: Partial<ListingFeedSource> = {}) 
       recordPartnerRequest: async () => {},
       log: async () => {},
     },
+    rateLimiter,
     listings: {
       page: async (domain, query) => {
         queries.push({ domain, query });
@@ -245,5 +248,69 @@ describe("GET /openyacht/v1/listings/{uuid}", () => {
     const response = await handlers.listing(signedGet(`/openyacht/v1/listings/${UUID}`), UUID);
     expect(response.status).toBe(403);
     expect(asked).toBe(false);
+  });
+});
+
+describe("API-9 RATE_LIMITED", () => {
+  /** Refuses everything after the first `allowance` requests, and remembers whom it was asked about. */
+  function limiter(allowance: number) {
+    const asked: string[] = [];
+    const limiter: RateLimiter = {
+      async take(key) {
+        asked.push(key);
+        return asked.length > allowance ? { allowed: false, retryAfterSeconds: 8 } : { allowed: true };
+      },
+    };
+    return { limiter, asked };
+  }
+
+  it("answers 429 with Retry-After and a schema-valid envelope — and storage is never asked", async () => {
+    const { limiter: rateLimiter } = limiter(1);
+    const { handlers, queries } = setup("verified", {}, rateLimiter);
+    expect((await handlers.listings(signedGet("/openyacht/v1/listings"))).status).toBe(200);
+
+    const response = await handlers.listings(signedGet("/openyacht/v1/listings?page_size=10"));
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("8");
+    const body = await response.json();
+    expect(valid("error", body)).toEqual([]);
+    expect(body.error).toMatchObject({ code: "RATE_LIMITED", details: { retry_after_seconds: 8 } });
+    expect(queries).toHaveLength(1);
+  });
+
+  it("counts against the verified partner, never against a domain that was merely claimed", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { limiter: rateLimiter, asked } = limiter(100);
+    const { handlers } = setup("verified", {}, rateLimiter);
+    // Unsigned, and claiming to be the partner: rejected before the limiter hears of it.
+    const forged = new Request(`https://${DOMAIN}/openyacht/v1/listings`, { headers: { host: DOMAIN, "X-OpenYacht-Node": PARTNER } });
+    expect((await handlers.listings(forged)).status).toBe(401);
+    expect(asked).toEqual([]);
+
+    await handlers.listings(signedGet("/openyacht/v1/listings"));
+    expect(asked).toEqual([PARTNER]);
+  });
+
+  it("a provisional partner is limited too: authenticated is enough to be counted", async () => {
+    const { limiter: rateLimiter } = limiter(0);
+    const response = await setup("provisional", {}, rateLimiter).handlers.listings(signedGet("/openyacht/v1/listings"));
+    expect(response.status).toBe(429);
+  });
+
+  it("enforces what capabilities advertises: 500 an hour, available as one burst", async () => {
+    const { handlers } = setup("verified", {}, new InMemoryRateLimiter(clock));
+    const capabilities = await (
+      await handlers.capabilities(new Request(`https://${DOMAIN}/openyacht/v1/capabilities`, { headers: { host: DOMAIN } }))
+    ).json();
+    expect(capabilities.limits.rate_per_hour).toBe(500);
+
+    // Distinct requests: a byte-identical one inside the window would be a replay, not a rate question.
+    const statuses = new Set<number>();
+    for (let request = 0; request < 500; request++)
+      statuses.add((await handlers.listing(signedGet(`/openyacht/v1/listings/${UUID}?n=${request}`), UUID)).status);
+    expect([...statuses]).toEqual([404]);
+    const refused = await handlers.listing(signedGet(`/openyacht/v1/listings/${UUID}?n=500`), UUID);
+    expect(refused.status).toBe(429);
+    expect(Number(refused.headers.get("retry-after"))).toBeGreaterThanOrEqual(1);
   });
 });

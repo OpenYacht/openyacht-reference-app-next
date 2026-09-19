@@ -5,7 +5,8 @@ import { nextAttemptAt, parseNodeIdentity, partnerFreshness } from "@/federation
 import { requireRole } from "@/lib/auth/session";
 import { SupabasePartnerRepository } from "@/lib/federation/repositories";
 import { userClient } from "@/lib/supabase/server";
-import { FieldGroupsForm, Introduce, PolicyForm, RefreshKeys, SyncNow, TrustAndRemoval } from "./partner-actions";
+import { FieldGroupsForm, Introduce, PolicyForm, RateLimitForm, RefreshKeys, SyncNow, TrustAndRemoval } from "./partner-actions";
+import { DEFAULT_RATE_PER_HOUR } from "@/lib/federation/handlers";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function PartnerPage({ params }: PageProps<"/partners/[id]"
   // What the partner said when it introduced itself, if it did.
   const { data: received } = await supabase
     .from("federation_partners")
-    .select("request_message, request_contact_email, requested_at, first_contact_at, field_groups")
+    .select("request_message, request_contact_email, requested_at, first_contact_at, field_groups, rate_per_hour")
     .eq("id", partner.id)
     .maybeSingle();
 
@@ -134,6 +135,23 @@ export default async function PartnerPage({ params }: PageProps<"/partners/[id]"
         </CardHeader>
         <CardContent>
           <FieldGroupsForm partnerId={partner.id} granted={(received?.field_groups as string[] | undefined) ?? []} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>How often they may ask</CardTitle>
+          <CardDescription>
+            Every signed request from this partner counts. Past the limit it is answered 429 and told how long to wait. Raise the figure for a partner
+            with a large inventory to fetch for the first time, rather than have its first sync take days.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RateLimitForm
+            partnerId={partner.id}
+            ratePerHour={(received?.rate_per_hour as number | null | undefined) ?? null}
+            defaultPerHour={DEFAULT_RATE_PER_HOUR}
+          />
         </CardContent>
       </Card>
 

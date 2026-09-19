@@ -208,3 +208,28 @@ export async function setFieldGroupsAction(_previous: ActionState, form: FormDat
     return explain(error);
   }
 }
+
+export async function setRateLimitAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  try {
+    const { partners } = await context();
+    const partner = await loadPartner(partners, form);
+    const entered = String(form.get("rate_per_hour") ?? "").trim();
+    if (entered !== "" && !/^[1-9]\d{0,5}$/.test(entered))
+      return { ok: false, message: "Enter a whole number of requests per hour, or leave it empty for the default." };
+
+    const { error } = await (
+      await userClient()
+    )
+      .from("federation_partners")
+      .update({ rate_per_hour: entered === "" ? null : Number(entered) })
+      .eq("id", partner.id);
+    if (error) return { ok: false, message: error.message };
+    revalidatePath(`/partners/${partner.id}`);
+    return {
+      ok: true,
+      message: entered === "" ? "Saved. This partner is held to the node's default." : `Saved. This partner may make ${entered} requests an hour.`,
+    };
+  } catch (error) {
+    return explain(error);
+  }
+}

@@ -13,8 +13,9 @@ FP-7.
 > role** — adding partners, the signed partnership request, cold sync and `updated_since` polling, tombstones, copies with provenance, a
 > per-partner acceptance policy, and receiving signed partnership requests from nodes that contact this one first; the **authority role** —
 > this node's own sale and charter listings, per-listing sharing, per-partner field groups, the partner feed with tombstones and an opaque
-> cursor, and listing media (renditions and SHA-256 hashes made at upload, originals behind expiring URLs); and **key rotation**, routine
-> with a 48-hour overlap and emergency without one. Not built yet: per-partner rate limiting.
+> cursor, and listing media (renditions and SHA-256 hashes made at upload, originals behind expiring URLs); **key rotation**, routine with
+> a 48-hour overlap and emergency without one; and **rate limiting**, per partner on the signed endpoints and per client address on the
+> discovery document. Push subscriptions are not implemented, and `capabilities` says so.
 
 ## The part you can lift: `federation/`
 
