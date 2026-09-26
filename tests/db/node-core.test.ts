@@ -99,13 +99,16 @@ describe("roles", () => {
     await client.query("update public.user_roles set role = 'viewer' where user_id = $1", [FIRST_USER]);
   });
 
-  it("a signed-in user reads only their own role, and cannot write any", async () => {
+  it("a signed-in user reads only their own role, and cannot change it", async () => {
     await completeSetup();
     await client.query("insert into public.user_roles (user_id, role) values ($1, 'viewer')", [SECOND_USER]);
 
     expect(await asUser(SECOND_USER, "select user_id from public.user_roles")).toEqual([{ user_id: SECOND_USER }]);
     expect(await asUser(FIRST_USER, "select user_id from public.user_roles")).toHaveLength(2);
-    await expect(asUser(SECOND_USER, "update public.user_roles set role = 'super_admin'")).rejects.toThrow(/permission denied/);
+    // Administrators may write roles (user-management.test.ts); a viewer's
+    // update simply matches no row it is allowed to change.
+    expect(await asUser(SECOND_USER, "update public.user_roles set role = 'super_admin' returning user_id")).toEqual([]);
+    expect((await client.query("select role from public.user_roles where user_id = $1", [SECOND_USER])).rows).toEqual([{ role: "viewer" }]);
   });
 });
 
@@ -172,7 +175,8 @@ describe("table privileges do not depend on the project's settings", () => {
     await expect(asRole("service_role", `select * from public.${table}`)).resolves.toBeDefined();
   });
 
-  it.each(TABLES)("a signed-in user has no write privilege on public.%s", async (table) => {
+  // user_roles is written by administrators under RLS: see user-management.test.ts.
+  it.each(TABLES.filter((table) => table !== "user_roles"))("a signed-in user has no write privilege on public.%s", async (table) => {
     await completeSetup();
     await expect(asUser(FIRST_USER, `delete from public.${table}`)).rejects.toThrow(/permission denied/);
   });

@@ -6,6 +6,8 @@ import { createContext, startTransition, use, useActionState, useEffect, useRef,
 export interface ActionState {
   ok: boolean;
   message: string | null;
+  /** A one-time link to hand to someone, shown beneath the message for copying. */
+  link?: string;
 }
 
 type Action = (previous: ActionState, form: FormData) => Promise<ActionState>;
@@ -52,6 +54,7 @@ export function ActionForm({
           <Alert status={state.ok ? "success" : "danger"}>
             <AlertContent>
               <AlertDescription>{state.message}</AlertDescription>
+              {state.link !== undefined && <code className="mt-2 block text-xs break-all select-all">{state.link}</code>}
             </AlertContent>
           </Alert>
         )}

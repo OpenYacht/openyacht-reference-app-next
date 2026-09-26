@@ -18,11 +18,12 @@ export default async function AdminLayout({ children }: LayoutProps<"/">) {
           {session.role !== null && <Link href="/listings">Listings</Link>}
           {hasRole(session, "super_admin") && <Link href="/partners">Partners</Link>}
           {session.role !== null && <Link href="/copies">Partner listings</Link>}
+          {hasRole(session, "admin") && <Link href="/users">Users</Link>}
         </nav>
         <form action={signOutAction} className="flex items-center gap-3">
-          <span className="text-muted text-sm">
+          <Link href="/account" className="text-muted text-sm underline-offset-4 hover:underline">
             {session.email} · {session.role ?? "no role"}
-          </span>
+          </Link>
           <Button type="submit" variant="secondary" size="sm">
             Sign out
           </Button>

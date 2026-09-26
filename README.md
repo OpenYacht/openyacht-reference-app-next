@@ -180,6 +180,28 @@ so no partner meets a key it cannot find; nobody needs to be told. An **emergenc
 its private half; it asks for a note, which is kept with the revoked key. Either way, a partner that _pinned_ your key will refuse the new one
 until its administrator confirms it — tell those partners first.
 
+## Users and roles
+
+Five fixed roles, in rank order:
+
+| Role          | May                                                                  |
+| ------------- | -------------------------------------------------------------------- |
+| `super_admin` | Everything, including partners, sharing, keys and the sync schedule. |
+| `admin`       | Listings, and the accounts ranked below admin.                       |
+| `editor`      | Every listing and its media.                                         |
+| `broker`      | Listings assigned to them.                                           |
+| `viewer`      | Read only.                                                           |
+
+Administrators manage accounts under **Users**. Adding a user creates the account with its role and gives you a one-time link to pass on;
+**no email is sent**, so a node needs no mail provider, and the new user chooses their own password. The same screen makes a password-reset
+link. The link's page verifies only when its button is pressed, so a mail scanner that prefetches the URL cannot use it up. It expires after the
+Supabase project's email link lifetime.
+
+The rules live in the database (row level security on `user_roles`), not in the screens: only a super admin gives the super admin role; an admin
+manages only accounts ranked below admin and gives only those roles; nobody changes their own role; at least one super admin always exists.
+Every change is recorded with who made it, and the record outlives the account. Everyone changes their own password under their name in the
+header.
+
 ## Tests
 
 ```bash
@@ -202,8 +224,9 @@ Also: `pnpm lint`, `pnpm typecheck`, `pnpm format:check`, `pnpm build`.
   decrypts it is executable by the service role alone.
 - **Migrations apply themselves at build** when a database URL is present (`pnpm build` runs `pnpm migrate` first), which is what lets a
   hosted deploy install itself. `supabase db push` works over the same files and the same ledger, if you prefer the CLI.
-- **Roles**: `super_admin`, `admin`, `editor`, `broker`, `viewer`, seeded by the first migration. At least one `super_admin` always exists —
-  the database enforces it.
+- **Roles**: `super_admin`, `admin`, `editor`, `broker`, `viewer`, seeded by the first migration; see [Users and roles](#users-and-roles).
+- **Accounts** are created and deleted through the Auth admin API, the one use of the service role in the admin UI (`lib/auth/accounts.ts`),
+  and only after the database, asked as the signed-in user, has agreed.
 
 ## Deployment
 

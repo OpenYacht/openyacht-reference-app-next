@@ -37,7 +37,9 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const signedIn = Boolean(data?.claims);
 
-  if (!signedIn && pathname !== "/login") return redirectTo("/login");
+  // /auth/confirm is where a one-time invitation or reset link lands: its
+  // visitor is not signed in yet, and pressing its button is what signs them in.
+  if (!signedIn && pathname !== "/login" && pathname !== "/auth/confirm") return redirectTo("/login");
   if (signedIn && pathname === "/login") return redirectTo("/");
   return response;
 }

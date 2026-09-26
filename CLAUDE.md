@@ -30,7 +30,7 @@ or Nest; Next and Supabase are the demonstration harness around it. ESLint enfor
 - `app/.well-known/`, `app/openyacht/v1/` — three-line route files binding handlers to the real store. Node runtime, never Edge.
 - `lib/federation/repositories.ts` implements the core's repositories over Supabase and takes the client to use: an administrator's action passes
   the signed-in user's client (RLS decides), the sync engine passes the service-role client. `lib/federation/consumer.ts` wires it together.
-- `lib/supabase/service.ts` (service role, bypasses RLS: federation + setup only) and `lib/supabase/server.ts` (the signed-in user, under RLS)
+- `lib/supabase/service.ts` (service role, bypasses RLS: federation, setup, and the Auth admin calls in `lib/auth/accounts.ts`) and `lib/supabase/server.ts` (the signed-in user, under RLS)
   are two trust domains. A federation partner is authenticated by signature, never by a Supabase JWT. Do not mix them.
 
 ## Conventions
