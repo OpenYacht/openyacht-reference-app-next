@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { builderChoices, categoryChoices } from "@/lib/federation/registry";
 import { userClient } from "@/lib/supabase/server";
 import { createListingAction } from "../actions";
@@ -8,7 +8,7 @@ import { ListingForm } from "../listing-form";
 export const dynamic = "force-dynamic";
 
 export default async function NewListingPage({ searchParams }: PageProps<"/listings/new">) {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   const listingType = (await searchParams).type === "charter" ? "charter" : "sale";
   const { data: vessels } = await (
     await userClient()

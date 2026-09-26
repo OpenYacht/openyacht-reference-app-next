@@ -1,7 +1,7 @@
 import { Button } from "@heroui/react";
 import Link from "next/link";
 import { signOutAction } from "@/app/login/actions";
-import { hasRole, requireSession } from "@/lib/auth/session";
+import { can, requireSession } from "@/lib/auth/session";
 
 export default async function AdminLayout({ children }: LayoutProps<"/">) {
   const session = await requireSession();
@@ -16,9 +16,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/">) {
             OpenYacht node
           </Link>
           {session.role !== null && <Link href="/listings">Listings</Link>}
-          {hasRole(session, "super_admin") && <Link href="/partners">Partners</Link>}
+          {can(session, "federation.manage") && <Link href="/partners">Partners</Link>}
           {session.role !== null && <Link href="/copies">Partner listings</Link>}
-          {hasRole(session, "admin") && <Link href="/users">Users</Link>}
+          {can(session, "users.manage") && <Link href="/users">Users</Link>}
+          {can(session, "users.manage", "roles.manage") && <Link href="/roles">Roles</Link>}
         </nav>
         <form action={signOutAction} className="flex items-center gap-3">
           <Link href="/account" className="text-muted text-sm underline-offset-4 hover:underline">

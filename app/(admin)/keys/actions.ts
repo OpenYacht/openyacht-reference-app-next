@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { generateKeypair } from "@/federation";
 import type { ActionState } from "@/components/action-form";
-import { requireRole } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { userClient } from "@/lib/supabase/server";
 
 // Rotating the signing key. Spec: federation-protocol.md §Key Rotation.
@@ -15,7 +15,7 @@ import { userClient } from "@/lib/supabase/server";
 const failed = (message: string): ActionState => ({ ok: false, message });
 
 export async function rotateKeyAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("super_admin");
+  await requirePermission("federation.manage");
   const emergency = form.get("mode") === "emergency";
   const note = String(form.get("note") ?? "").trim();
   if (emergency && note === "") return failed("Say what happened. An emergency rotation is recorded with the key it replaces.");
@@ -25,7 +25,7 @@ export async function rotateKeyAction(_previous: ActionState, form: FormData): P
 
   // The keypair is made here and the seed handed straight to the database,
   // which puts it in Vault (FP-4). As the signed-in user: the function checks
-  // for a super admin itself, so nothing here needs the service role.
+  // for federation.manage itself, so nothing here needs the service role.
   const keypair = generateKeypair();
   const { error } = await (
     await userClient()

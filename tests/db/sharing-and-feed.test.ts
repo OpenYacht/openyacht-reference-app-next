@@ -359,9 +359,9 @@ describe("LS-14 changing what a partner is granted", () => {
     await client.query("rollback to savepoint attempt");
   });
 
-  it("is a super admin's alone, and field_groups cannot be written around it", async () => {
+  it("needs federation.manage, and field_groups cannot be written around it", async () => {
     const call = "select public.set_partner_field_groups($1, '{pricing}')";
-    await expect(asUser(EDITOR, call, [alpha])).rejects.toThrow(/Only a super admin/);
+    await expect(asUser(EDITOR, call, [alpha])).rejects.toThrow(/needs the federation.manage permission/);
     await expect(asUser(SUPER_ADMIN, call, [alpha])).resolves.toBeDefined();
     await expect(asUser(SUPER_ADMIN, "update public.federation_partners set field_groups = '{}' where id = $1", [alpha])).rejects.toThrow(
       /permission denied/,

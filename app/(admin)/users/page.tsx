@@ -1,5 +1,5 @@
 import { Alert, AlertContent, AlertDescription, Card, CardContent, CardDescription, CardHeader, CardTitle, Chip } from "@heroui/react";
-import { requireRole } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { userClient } from "@/lib/supabase/server";
 import { InviteUserForm, ManageUser, type RoleOption } from "./user-forms";
 
@@ -35,7 +35,7 @@ function accountState(account: Account): string {
 }
 
 export default async function UsersPage({ searchParams }: PageProps<"/users">) {
-  const session = await requireRole("admin");
+  const session = await requirePermission("users.manage");
   const { deleted } = await searchParams;
   const supabase = await userClient();
 
@@ -68,8 +68,8 @@ export default async function UsersPage({ searchParams }: PageProps<"/users">) {
       <header>
         <h1 className="text-2xl font-semibold">Users</h1>
         <p className="text-muted mt-1 text-sm">
-          Accounts on this node and their roles. Only a super admin gives the super admin role; an admin manages accounts ranked below their own;
-          nobody changes their own role.
+          Accounts on this node and their roles. Only a super admin gives the super admin role; anyone else who manages users manages accounts ranked
+          below their own; nobody changes their own role.
         </p>
       </header>
 

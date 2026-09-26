@@ -3,7 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/components/action-form";
-import { requireRole } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { storedFiles, type StoredDocument, type StoredImage, type StoredMedia } from "@/lib/listings/own-listing-row";
 import { MAX_UPLOAD_BYTES, renderImage, sha256Hex, type Rendition } from "@/lib/media/renditions";
 import { ORIGINALS_BUCKET, SERVED_BUCKET, UPLOADS_BUCKET } from "@/lib/media/storage";
@@ -43,7 +43,7 @@ async function listingUuid(listingId: number): Promise<string | null> {
 export type StartUploadResult = { ok: true; itemId: string; uploadUrl: string } | { ok: false; message: string };
 
 export async function startUploadAction(listingId: number): Promise<StartUploadResult> {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   const uuid = await listingUuid(listingId);
   if (uuid === null) return { ok: false, message: "No such listing." };
 
@@ -56,7 +56,7 @@ export async function startUploadAction(listingId: number): Promise<StartUploadR
 }
 
 export async function finishUploadAction(listingId: number, collection: string, itemId: string): Promise<ActionState> {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   if (!isCollection(collection) || LINK_COLLECTIONS.includes(collection as never)) return failed("Unknown media collection.");
   if (!ITEM_ID.test(itemId)) return failed("Unknown upload.");
   const uuid = await listingUuid(listingId);
@@ -136,7 +136,7 @@ async function removeFiles(media: StoredMedia) {
 }
 
 export async function addLinkAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   const listingId = Number(form.get("listing_id"));
   const collection = String(form.get("collection"));
   if (!LINK_COLLECTIONS.includes(collection as never)) return failed("Unknown media collection.");
@@ -163,7 +163,7 @@ export async function addLinkAction(_previous: ActionState, form: FormData): Pro
 }
 
 export async function removeMediaAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   const listingId = Number(form.get("listing_id"));
   const collection = String(form.get("collection"));
   if (!isCollection(collection)) return failed("Unknown media collection.");
@@ -180,7 +180,7 @@ export async function removeMediaAction(_previous: ActionState, form: FormData):
 }
 
 export async function describeMediaAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   const listingId = Number(form.get("listing_id"));
   const category = String(form.get("category") ?? "");
   const { error } = await (
@@ -198,7 +198,7 @@ export async function describeMediaAction(_previous: ActionState, form: FormData
 }
 
 export async function moveMediaAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   const listingId = Number(form.get("listing_id"));
   const { error } = await (
     await userClient()

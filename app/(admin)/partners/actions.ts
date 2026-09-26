@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { BlockedOutboundHost, PartnerError, WellKnownError, type AcceptancePolicy, type Partner } from "@/federation";
-import { requireRole, type Session } from "@/lib/auth/session";
+import { requirePermission, type Session } from "@/lib/auth/session";
 import { partnerService, reapplyAcceptancePolicy, syncPartner } from "@/lib/federation/consumer";
 import { RepositoryError, SupabasePartnerRepository } from "@/lib/federation/repositories";
 import { userClient } from "@/lib/supabase/server";
 
 // Every action here is a public POST endpoint, so each one establishes for
-// itself who is calling. Partner management is the super_admin's. The writes
+// itself who is calling. Partner management needs federation.manage. The writes
 // then run as that user, under row level security — the database refuses them
 // too if this check were ever wrong.
 
@@ -21,7 +21,7 @@ export interface ActionState {
 const POLICIES: AcceptancePolicy[] = ["accept_all", "accept_matching", "hold"];
 
 async function context(): Promise<{ session: Session; partners: SupabasePartnerRepository }> {
-  const session = await requireRole("super_admin");
+  const session = await requirePermission("federation.manage");
   return { session, partners: new SupabasePartnerRepository(await userClient(), session.userId) };
 }
 

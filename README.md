@@ -182,23 +182,31 @@ until its administrator confirms it — tell those partners first.
 
 ## Users and roles
 
-Five fixed roles, in rank order:
+Five roles, in rank order: `super_admin`, `admin`, `editor`, `broker`, `viewer`. What each may do is a matrix of seven permissions, which
+a super admin edits under **Roles**:
 
-| Role          | May                                                                  |
-| ------------- | -------------------------------------------------------------------- |
-| `super_admin` | Everything, including partners, sharing, keys and the sync schedule. |
-| `admin`       | Listings, and the accounts ranked below admin.                       |
-| `editor`      | Every listing and its media.                                         |
-| `broker`      | Listings assigned to them.                                           |
-| `viewer`      | Read only.                                                           |
+| Permission                 | Allows                                                                        | Shipped with  |
+| -------------------------- | ----------------------------------------------------------------------------- | ------------- |
+| `users.manage`             | Adding accounts, giving roles and taking them away, below their own rank.     | admin         |
+| `roles.manage`             | Changing what each role may do, for roles below their own.                    | —             |
+| `listings.manage`          | Creating, editing, sharing and deleting every listing, with its media.        | admin, editor |
+| `listings.manage_own`      | The same for listings assigned to themselves only; they read only those, too. | broker        |
+| `federation.manage`        | Partners, what they are granted, signing keys, the sync schedule.             | —             |
+| `federation.notifications` | Alerts when an unknown node makes contact or a partner's identity changes.    | —             |
+| `activity-log.view`        | The record of role changes and federation requests.                           | admin         |
+
+`super_admin` holds every permission and cannot be edited, so a node cannot lock itself out. Every role reads listings. Whoever edits the
+matrix edits only roles ranked below their own, and grants or withdraws only permissions they hold themselves. Policies check permissions,
+never role names: `private.has_permission()` in [`supabase/migrations/`](supabase/migrations/).
 
 Administrators manage accounts under **Users**. Adding a user creates the account with its role and gives you a one-time link to pass on;
 **no email is sent**, so a node needs no mail provider, and the new user chooses their own password. The same screen makes a password-reset
 link. The link's page verifies only when its button is pressed, so a mail scanner that prefetches the URL cannot use it up. It expires after the
 Supabase project's email link lifetime.
 
-The rules live in the database (row level security on `user_roles`), not in the screens: only a super admin gives the super admin role; an admin
-manages only accounts ranked below admin and gives only those roles; nobody changes their own role; at least one super admin always exists.
+The rules live in the database (row level security on `user_roles`), not in the screens: only a super admin gives the super admin role; anyone
+else with `users.manage` manages only accounts ranked below their own role and gives only those roles; nobody changes their own role; at least
+one super admin always exists.
 Every change is recorded with who made it, and the record outlives the account. Everyone changes their own password under their name in the
 header.
 

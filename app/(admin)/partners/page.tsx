@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Chip } from "@heroui/react";
 import Link from "next/link";
 import { parseNodeIdentity, partnerFreshness } from "@/federation";
-import { requireRole } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { SupabasePartnerRepository } from "@/lib/federation/repositories";
 import { userClient } from "@/lib/supabase/server";
 import { AddPartnerForm } from "./add-partner-form";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 const TRUST_COLOR = { verified: "success", provisional: "warning", blocked: "danger" } as const;
 
 export default async function PartnersPage() {
-  const session = await requireRole("super_admin");
+  const session = await requirePermission("federation.manage");
   const partners = await new SupabasePartnerRepository(await userClient()).list();
   const now = new Date();
 

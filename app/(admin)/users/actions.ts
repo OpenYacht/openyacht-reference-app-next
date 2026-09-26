@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/action-form";
 import { confirmLink, createInvitedAccount, createRecoveryToken, deleteAccount } from "@/lib/auth/accounts";
-import { requireRole } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { userClient } from "@/lib/supabase/server";
 
 // User management. Who may do what is decided in the database, as the
@@ -30,7 +30,7 @@ async function ask(check: "can_manage_user" | "can_assign_role", argument: strin
 }
 
 export async function inviteUserAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("admin");
+  await requirePermission("users.manage");
   const email = String(form.get("email") ?? "")
     .trim()
     .toLowerCase();
@@ -58,7 +58,7 @@ export async function inviteUserAction(_previous: ActionState, form: FormData): 
 }
 
 export async function setRoleAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("admin");
+  await requirePermission("users.manage");
   const userId = String(form.get("user_id") ?? "");
   const role = String(form.get("role") ?? "");
   if (!(await ask("can_manage_user", userId))) return failed("You cannot change this account's role.");
@@ -86,7 +86,7 @@ export async function setRoleAction(_previous: ActionState, form: FormData): Pro
 }
 
 export async function passwordLinkAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("admin");
+  await requirePermission("users.manage");
   const userId = String(form.get("user_id") ?? "");
   if (!(await ask("can_manage_user", userId))) return failed("You cannot reset this account's password.");
 
@@ -100,7 +100,7 @@ export async function passwordLinkAction(_previous: ActionState, form: FormData)
 }
 
 export async function deleteUserAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("admin");
+  await requirePermission("users.manage");
   const userId = String(form.get("user_id") ?? "");
   if (form.get("confirmed") !== "yes") return failed("Confirm that the account is to be deleted.");
   if (!(await ask("can_manage_user", userId))) return failed("You cannot delete this account.");

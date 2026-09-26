@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { canTransition, type ListingStatus } from "@/federation";
 import type { ActionState } from "@/components/action-form";
-import { requireRole } from "@/lib/auth/session";
+import { can, requirePermission } from "@/lib/auth/session";
 import { builderChoices, categoryChoices } from "@/lib/federation/registry";
 import { descriptionSanitiser } from "@/lib/federation/sanitiser";
 import { parseListingForm, withOverview } from "@/lib/listings/listing-form";
@@ -21,7 +21,7 @@ const formDeps = { builders: builderChoices, categories: categoryChoices, saniti
 const failed = (message: string): ActionState => ({ ok: false, message });
 
 export async function createListingAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  const session = await requireRole("broker");
+  const session = await requirePermission("listings.manage", "listings.manage_own");
   const parsed = parseListingForm(form, formDeps);
   if (!parsed.ok) return failed(parsed.errors.join(" "));
   const supabase = await userClient();
@@ -47,7 +47,7 @@ export async function createListingAction(_previous: ActionState, form: FormData
       descriptions: withOverview([], overview),
       brokers: broker === null ? [] : [broker],
       // A broker's listings are their own; an editor's are unassigned until given to someone.
-      assigned_broker_id: session.role === "broker" ? session.userId : null,
+      assigned_broker_id: can(session, "listings.manage") ? null : session.userId,
     })
     .select("id")
     .single();
@@ -57,7 +57,7 @@ export async function createListingAction(_previous: ActionState, form: FormData
 }
 
 export async function updateListingAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   const parsed = parseListingForm(form, formDeps);
   if (!parsed.ok) return failed(parsed.errors.join(" "));
   const supabase = await userClient();
@@ -97,7 +97,7 @@ export async function updateListingAction(_previous: ActionState, form: FormData
 }
 
 export async function setStatusAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   const id = Number(form.get("listing_id"));
   const from = String(form.get("from")) as ListingStatus;
   const to = String(form.get("to")) as ListingStatus;
@@ -118,7 +118,7 @@ export async function setStatusAction(_previous: ActionState, form: FormData): P
 }
 
 export async function setSharingAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("broker");
+  await requirePermission("listings.manage", "listings.manage_own");
   const id = Number(form.get("listing_id"));
   const audience = String(form.get("audience"));
   if (!["everyone", "selected", "none"].includes(audience)) return failed("Choose who this listing is shared with.");
@@ -141,7 +141,7 @@ export async function setSharingAction(_previous: ActionState, form: FormData): 
 }
 
 export async function deleteDraftAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("editor");
+  await requirePermission("listings.manage");
   const supabase = await userClient();
   const { data, error } = await supabase
     .from("listings")

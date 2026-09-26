@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Chip } from "@heroui/react";
 import { IdentityConfigError, parseNodeIdentity, WELL_KNOWN_PATH } from "@/federation";
-import { requireSession } from "@/lib/auth/session";
+import { can, requireSession } from "@/lib/auth/session";
 import { optionalEnv } from "@/lib/env";
 import { userClient } from "@/lib/supabase/server";
 import { KeyRotation } from "./keys/key-rotation";
@@ -38,14 +38,14 @@ export default async function DashboardPage() {
   const supabase = await userClient();
 
   // Both reads run as the signed-in user. What comes back is decided by the
-  // RLS policies, not by this page: key metadata is visible to a super_admin
+  // RLS policies, not by this page: key metadata is visible with federation.manage
   // only, so for anyone else `keys` is simply empty.
-  const superAdmin = session.role === "super_admin";
+  const federationManager = can(session, "federation.manage");
   const [{ data: node }, { data: keys }, schedule] = await Promise.all([
     supabase.from("node_settings").select("node_uuid, identity_domain, identity_mode, setup_completed_at").maybeSingle(),
     supabase.from("federation_keys").select("key_id, status, created_at, overlap_ends_at, rotation_note").order("id", { ascending: false }),
-    // The function refuses anyone else, so only a super admin asks.
-    superAdmin ? supabase.rpc("sync_schedule_status").maybeSingle<SyncScheduleStatus>() : null,
+    // The function refuses anyone else, so only a federation manager asks.
+    federationManager ? supabase.rpc("sync_schedule_status").maybeSingle<SyncScheduleStatus>() : null,
   ]);
   const syncStatus = schedule?.data ?? null;
   const secret = optionalEnv("INTERNAL_API_SECRET");
@@ -68,7 +68,7 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>No role assigned</CardTitle>
-            <CardDescription>This account is signed in but holds no role. Ask a super admin to assign one.</CardDescription>
+            <CardDescription>This account is signed in but holds no role. Ask an administrator to assign one.</CardDescription>
           </CardHeader>
         </Card>
       ) : (
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
 
-          {superAdmin && (
+          {federationManager && (
             <Card>
               <CardHeader>
                 <CardTitle>Scheduled sync</CardTitle>
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
             </Card>
           )}
 
-          {superAdmin && (
+          {federationManager && (
             <Card>
               <CardHeader>
                 <CardTitle>Signing keys</CardTitle>

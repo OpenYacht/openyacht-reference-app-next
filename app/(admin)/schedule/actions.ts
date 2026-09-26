@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/components/action-form";
-import { requireRole } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { optionalEnv } from "@/lib/env";
 import { userClient } from "@/lib/supabase/server";
 
@@ -12,13 +12,13 @@ import { userClient } from "@/lib/supabase/server";
 const failed = (message: string): ActionState => ({ ok: false, message });
 
 export async function scheduleSyncAction(): Promise<ActionState> {
-  await requireRole("super_admin");
+  await requirePermission("federation.manage");
   // Read from this server's environment, never from the form: the job must
   // present the secret the deployed route checks.
   const secret = optionalEnv("INTERNAL_API_SECRET");
   if (secret === undefined) return failed("INTERNAL_API_SECRET is not set in this server's environment.");
 
-  // As the signed-in user: the function checks for a super admin itself.
+  // As the signed-in user: the function checks for federation.manage itself.
   const { data: minute, error } = await (await userClient()).rpc("schedule_sync", { p_secret: secret });
   if (error) return failed(`Synchronisation was not scheduled: ${error.message}`);
 
@@ -27,7 +27,7 @@ export async function scheduleSyncAction(): Promise<ActionState> {
 }
 
 export async function unscheduleSyncAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await requireRole("super_admin");
+  await requirePermission("federation.manage");
   if (form.get("confirmed") !== "yes") return failed("Confirm that scheduled synchronisation is to stop.");
 
   const { error } = await (await userClient()).rpc("unschedule_sync");

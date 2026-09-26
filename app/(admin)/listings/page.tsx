@@ -1,6 +1,6 @@
 import { Chip } from "@heroui/react";
 import Link from "next/link";
-import { hasRole, requireSession } from "@/lib/auth/session";
+import { can, requireSession } from "@/lib/auth/session";
 import { userClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export default async function ListingsPage() {
           <h1 className="text-2xl font-semibold">Listings</h1>
           <p className="text-muted mt-1 text-sm">The listings this node is the authority for. Partners receive them from here and nowhere else.</p>
         </div>
-        {hasRole(session, "broker") && (
+        {can(session, "listings.manage", "listings.manage_own") && (
           <div className="flex gap-3 text-sm font-medium">
             <Link href="/listings/new?type=sale" className="bg-accent text-accent-foreground rounded-full px-4 py-2">
               New sale listing

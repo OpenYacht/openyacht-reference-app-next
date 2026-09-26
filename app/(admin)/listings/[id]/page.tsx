@@ -2,7 +2,7 @@ import { Alert, AlertContent, AlertDescription, AlertTitle, Card, CardContent, C
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { canonicalUri, parseNodeIdentity } from "@/federation";
-import { hasRole, requireSession } from "@/lib/auth/session";
+import { can, requireSession } from "@/lib/auth/session";
 import { builderChoices, categoryChoices } from "@/lib/federation/registry";
 import type { StoredImage, StoredMedia } from "@/lib/listings/own-listing-row";
 import { servedUrl } from "@/lib/media/storage";
@@ -69,7 +69,7 @@ export default async function ListingPage({ params }: PageProps<"/listings/[id]"
   const broker = record((listing.brokers as unknown[])[0]);
   const overview = (listing.descriptions as { section: string; content: string }[]).find((description) => description.section === "overview");
   const history = [...(listing.price_history as { id: number; amount: string; currency: string; changed_at: string }[])].sort((a, b) => b.id - a.id);
-  const canEdit = hasRole(session, "broker");
+  const canEdit = can(session, "listings.manage", "listings.manage_own");
   const ended = listing.status === "sold" || listing.status === "withdrawn";
 
   return (
@@ -105,7 +105,7 @@ export default async function ListingPage({ params }: PageProps<"/listings/[id]"
             <CardDescription>draft → active ⇄ under offer → sold or withdrawn. Sold and withdrawn are final.</CardDescription>
           </CardHeader>
           <CardContent>
-            <StatusControls listingId={listing.id} status={listing.status} canDelete={hasRole(session, "editor")} />
+            <StatusControls listingId={listing.id} status={listing.status} canDelete={can(session, "listings.manage")} />
           </CardContent>
         </Card>
       )}

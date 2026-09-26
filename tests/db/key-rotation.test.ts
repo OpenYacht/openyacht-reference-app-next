@@ -166,9 +166,9 @@ describe("what holds whatever happens", () => {
     await client.query("rollback to savepoint stray");
   });
 
-  it("only a super admin rotates", async () => {
-    await expect(rotate(newKey(), false, EDITOR)).rejects.toThrow(/Only a super admin/);
-    await expect(rotate(newKey(), true, EDITOR)).rejects.toThrow(/Only a super admin/);
+  it("only a holder of federation.manage rotates", async () => {
+    await expect(rotate(newKey(), false, EDITOR)).rejects.toThrow(/needs the federation.manage permission/);
+    await expect(rotate(newKey(), true, EDITOR)).rejects.toThrow(/needs the federation.manage permission/);
     expect(await published()).toEqual([first.keyId]);
   });
 

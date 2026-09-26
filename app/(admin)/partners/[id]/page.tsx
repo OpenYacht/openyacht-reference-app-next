@@ -2,7 +2,7 @@ import { Alert, AlertContent, AlertDescription, AlertTitle, Card, CardContent, C
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { nextAttemptAt, parseNodeIdentity, partnerFreshness } from "@/federation";
-import { requireRole } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { SupabasePartnerRepository } from "@/lib/federation/repositories";
 import { userClient } from "@/lib/supabase/server";
 import { FieldGroupsForm, Introduce, PolicyForm, RateLimitForm, RefreshKeys, SyncNow, TrustAndRemoval } from "./partner-actions";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 const when = (value: Date | null) => (value === null ? "never" : `${value.toISOString().slice(0, 16).replace("T", " ")} UTC`);
 
 export default async function PartnerPage({ params }: PageProps<"/partners/[id]">) {
-  const session = await requireRole("super_admin");
+  const session = await requirePermission("federation.manage");
   const { id } = await params;
   const supabase = await userClient();
   const partners = new SupabasePartnerRepository(supabase);
