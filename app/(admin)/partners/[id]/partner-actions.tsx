@@ -99,6 +99,20 @@ export function TrustAndRemoval({ partnerId, trustLevel, removable }: { partnerI
       <ActionForm action={setTrustAction}>
         <Id partnerId={partnerId} />
         <input type="hidden" name="trust_level" value={trustLevel === "verified" ? "blocked" : "verified"} />
+        {trustLevel === "verified" && (
+          <Checkbox name="confirmed" value="yes" className="mb-3">
+            <CheckboxContent>
+              <CheckboxControl>
+                <CheckboxIndicator />
+              </CheckboxControl>
+              <Label>End this partnership</Label>
+            </CheckboxContent>
+            <Description>
+              Synchronisation stops, and every listing from this partner whose usage terms end with the partnership is dropped. Approving it again
+              later brings back whatever it still shares.
+            </Description>
+          </Checkbox>
+        )}
         <SubmitButton variant={trustLevel === "verified" ? "danger-soft" : "primary"} className="self-start">
           {trustLevel === "verified" ? "Block this partner" : "Approve this partner"}
         </SubmitButton>

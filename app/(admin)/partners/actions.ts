@@ -161,10 +161,18 @@ export async function setTrustAction(_previous: ActionState, form: FormData): Pr
   try {
     const { partners } = await context();
     const partner = await loadPartner(partners, form);
-    const trustLevel = form.get("trust_level") === "verified" ? "verified" : "blocked";
-    await partners.setTrustLevel(partner.id, trustLevel);
+    if (form.get("trust_level") === "verified") {
+      await partners.setTrustLevel(partner.id, "verified");
+      revalidatePath(`/partners/${partner.id}`);
+      return { ok: true, message: "Partner approved." };
+    }
+    if (form.get("confirmed") !== "yes") return { ok: false, message: "Confirm that the partnership is to end." };
+    const ended = await partnerService(partners).block(partner);
     revalidatePath(`/partners/${partner.id}`);
-    return { ok: true, message: trustLevel === "verified" ? "Partner approved." : "Partner blocked. Nothing further is synchronised from it." };
+    return {
+      ok: true,
+      message: `Partner blocked. Nothing further is synchronised from it, and ${ended} listing${ended === 1 ? " whose" : "s whose"} terms end with the partnership ${ended === 1 ? "has" : "have"} been dropped.`,
+    };
   } catch (error) {
     return explain(error);
   }

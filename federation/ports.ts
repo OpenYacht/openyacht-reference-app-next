@@ -159,6 +159,13 @@ export interface PartnerRepository {
   updateDiscovery(partnerId: string, discovery: { nodeName: string; keys: PublishedKey[] }): Promise<void>;
   setPinnedKey(partnerId: string, keyId: string | null): Promise<void>;
   setTrustLevel(partnerId: string, trustLevel: TrustLevel): Promise<void>;
+  /**
+   * Ends the partnership (ID-10): blocks the partner, drops the data of every
+   * copy from it whose usage terms end with the partnership (a missing usage
+   * block counts as such), and clears the sync watermark so a later approval
+   * starts with a cold sync. Returns how many copies were ended.
+   */
+  endPartnership(partnerId: string): Promise<number>;
   /** FP-11: records the new UUID and downgrades in one step. */
   recordUuidChange(partnerId: string, newUuid: string): Promise<void>;
   markRequestSent(partnerId: string, at: Date): Promise<void>;

@@ -124,6 +124,14 @@ export class SupabasePartnerRepository implements PartnerRepository {
     return this.update(partnerId, { trust_level: trustLevel, approved_by: trustLevel === "verified" ? this.actingUserId : null });
   }
 
+  async endPartnership(partnerId: string) {
+    // One database function, so the block, the ended copies and the cleared
+    // watermark happen together; it checks federation.manage itself.
+    const { data, error } = await this.db.rpc("end_partnership", { p_partner_id: Number(partnerId) });
+    if (error) throw new RepositoryError(`Could not end the partnership: ${error.message}`);
+    return data as number;
+  }
+
   setAcceptancePolicy(partnerId: string, policy: Partner["acceptancePolicy"]) {
     return this.update(partnerId, { acceptance_policy: policy });
   }

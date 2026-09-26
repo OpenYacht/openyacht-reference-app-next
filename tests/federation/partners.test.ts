@@ -175,3 +175,14 @@ describe("removing a partner", () => {
     expect(await partners.findByDomain(AUTHORITY)).not.toBeNull();
   });
 });
+
+describe("ID-10 ending a partnership", () => {
+  it("blocks the partner and clears its watermark, so a later approval starts with a cold sync", async () => {
+    const { partnerService, partners } = service();
+    const partner = await partnerService.add(AUTHORITY, addOptions);
+    await partners.recordSyncSuccess(partner.id, { at: new Date(), watermark: "2026-09-01T10:00:00Z" });
+    await partnerService.block(partner);
+    expect(partners.get(partner.id)).toMatchObject({ trustLevel: "blocked", syncWatermark: null });
+    expect(partners.endedPartnerships).toEqual([partner.id]);
+  });
+});

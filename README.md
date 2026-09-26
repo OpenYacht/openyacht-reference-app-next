@@ -133,6 +133,14 @@ A super admin adds a partner under **Partners** with nothing but its identity do
 verified TLS, trusts it on first use, and sends a signed partnership request carrying your message — so the other administrator learns who is
 asking before approving. Until they approve, their node answers `PARTNER_PROVISIONAL`; that is not an error, and polling simply continues.
 
+When an unknown node makes contact, or a partner's domain starts answering with a different node UUID (a different installation may now be
+behind it), the partner is left provisional and an alert waits on the dashboard of everyone holding `federation.notifications` until one of
+them dismisses it. The node sends no email.
+
+A partnership that has delivered listings ends by **blocking** the partner; its record stays as the provenance of what it sent. Blocking stops
+synchronisation and drops the data of every listing whose usage terms end with the partnership (`expires_with_listing`, the recommended
+default). Approving the partner again starts with a cold sync, which brings back whatever it still shares.
+
 **Synchronising is not publishing.** Every listing a partner shares is stored as a copy, with its provenance, and kept current — including
 withdrawals, which drop the stored data. Whether a copy is _displayed_ is a per-partner policy: hold everything, accept what arrives complete,
 or accept everything. Three things no policy overrides: a listing whose usage terms forbid display, a vessel that two authorities both claim

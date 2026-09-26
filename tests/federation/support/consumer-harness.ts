@@ -91,6 +91,12 @@ export class MemoryPartners implements PartnerRepository {
   async setTrustLevel(id: string, trustLevel: Partner["trustLevel"]) {
     this.patch(id, { trustLevel });
   }
+  endedPartnerships: string[] = [];
+  async endPartnership(id: string) {
+    this.patch(id, { trustLevel: "blocked", syncWatermark: null });
+    this.endedPartnerships.push(id);
+    return 0;
+  }
   async recordUuidChange(id: string, nodeUuid: string) {
     this.patch(id, { nodeUuid, trustLevel: "provisional" });
   }

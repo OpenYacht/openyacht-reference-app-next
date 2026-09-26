@@ -4,6 +4,7 @@ import { IdentityConfigError, parseNodeIdentity, WELL_KNOWN_PATH } from "@/feder
 import { can, requireSession } from "@/lib/auth/session";
 import { optionalEnv } from "@/lib/env";
 import { userClient } from "@/lib/supabase/server";
+import { FederationAlerts, type FederationAlert } from "./alerts/federation-alerts";
 import { KeyRotation } from "./keys/key-rotation";
 import { SyncSchedule } from "./schedule/sync-schedule";
 
@@ -41,12 +42,17 @@ export default async function DashboardPage() {
   // RLS policies, not by this page: key metadata is visible with federation.manage
   // only, so for anyone else `keys` is simply empty.
   const federationManager = can(session, "federation.manage");
-  const [{ data: node }, { data: keys }, schedule] = await Promise.all([
+  const alertRecipient = can(session, "federation.notifications");
+  const [{ data: node }, { data: keys }, schedule, alerts] = await Promise.all([
     supabase.from("node_settings").select("node_uuid, identity_domain, identity_mode, setup_completed_at").maybeSingle(),
     supabase.from("federation_keys").select("key_id, status, created_at, overlap_ends_at, rotation_note").order("id", { ascending: false }),
     // The function refuses anyone else, so only a federation manager asks.
     federationManager ? supabase.rpc("sync_schedule_status").maybeSingle<SyncScheduleStatus>() : null,
+    alertRecipient
+      ? supabase.from("federation_alerts").select("id, kind, partner_id, domain, node_name, raised_at").is("resolved_at", null).order("raised_at")
+      : null,
   ]);
+  const openAlerts = (alerts?.data ?? []) as FederationAlert[];
   const syncStatus = schedule?.data ?? null;
   const secret = optionalEnv("INTERNAL_API_SECRET");
   const secretChanged =
@@ -73,6 +79,18 @@ export default async function DashboardPage() {
         </Card>
       ) : (
         <>
+          {openAlerts.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Needs attention</CardTitle>
+                <CardDescription>Federation events a person here must know about.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FederationAlerts alerts={openAlerts} linkPartners={federationManager} />
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Identity</CardTitle>

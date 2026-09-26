@@ -55,6 +55,24 @@ function partnerStore(repository: SupabasePartnerRepository): PartnerStore {
   };
 }
 
+async function raiseAlert(kind: "first_contact" | "node_uuid_changed", domain: string, nodeName: string | null, detail: Record<string, string>) {
+  try {
+    const db = serviceClient();
+    const { data: partner } = await db.from("federation_partners").select("id, node_name").eq("domain", domain).maybeSingle();
+    const { error } = await db.from("federation_alerts").insert({
+      kind,
+      domain,
+      partner_id: partner?.id ?? null,
+      node_name: nodeName ?? partner?.node_name ?? null,
+      detail,
+    });
+    if (error) throw new Error(error.message);
+  } catch (error) {
+    // The request's answer does not depend on the alert; the console line above still stands.
+    console.error(`[openyacht] could not raise a ${kind} alert for ${domain}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 export const inboundFederation: InboundFederation = {
   verify(request) {
     const repository = new SupabasePartnerRepository(serviceClient());
@@ -63,11 +81,17 @@ export const inboundFederation: InboundFederation = {
       partners: partnerStore(repository),
       wellKnown,
       replayGuard,
+      // FP-13 and FP-11 require administrators to be told. The alert waits on
+      // the dashboard of everyone holding federation.notifications.
       observer: {
-        firstContact: ({ domain, nodeName }) =>
-          console.info(`[openyacht] first contact from ${domain} (${nodeName}) — registered as provisional, awaiting approval`),
-        nodeUuidChanged: ({ domain }) =>
-          console.warn(`[openyacht] ${domain} now reports a different node UUID — downgraded to provisional, awaiting re-approval`),
+        async firstContact({ domain, nodeName }) {
+          console.info(`[openyacht] first contact from ${domain} (${nodeName}) — registered as provisional, awaiting approval`);
+          await raiseAlert("first_contact", domain, nodeName, {});
+        },
+        async nodeUuidChanged({ domain, previousUuid, newUuid }) {
+          console.warn(`[openyacht] ${domain} now reports a different node UUID — downgraded to provisional, awaiting re-approval`);
+          await raiseAlert("node_uuid_changed", domain, null, { previous_uuid: previousUuid, new_uuid: newUuid });
+        },
       },
     }).verify(request);
   },

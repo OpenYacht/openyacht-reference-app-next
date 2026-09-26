@@ -142,6 +142,15 @@ export class PartnerService {
   }
 
   /**
+   * Ends a partnership. Blocking is how a partnership that has delivered
+   * listings ends — the partner row stays, as the provenance of what it sent —
+   * and ending it ends the use of every listing whose terms say so (ID-10).
+   */
+  async block(partner: Partner): Promise<number> {
+    return this.options.partners.endPartnership(partner.id);
+  }
+
+  /**
    * Undoes a mistaken add. Allowed only while nothing has been received from
    * the partner: the partner record is the provenance anchor of every copy
    * (ID-3), so once listings have arrived a partnership ends by blocking.
