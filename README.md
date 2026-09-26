@@ -145,8 +145,11 @@ pnpm sync              # one pass over the partners that are due — the server 
 pnpm sync -- --force   # ignore the failure backoff
 ```
 
-In production, point any timer at that route — `pg_cron` with `pg_net` inside the Supabase project, a host's cron feature, or crontab with
-`curl`. Hourly is ample; the protocol's obligation is that withdrawals are applied within 24 hours.
+In production the database keeps the time. A super admin presses **Schedule hourly sync** on the dashboard, and `pg_cron` calls the route
+once an hour through `pg_net`, at a minute picked at random so that nodes do not all poll at the top of the hour. The secret is copied into
+Supabase Vault, never into the job's SQL, and the dashboard shows the last call's outcome. After changing `INTERNAL_API_SECRET`, register
+again; the dashboard says when the two differ. Any other timer works too (a host's cron feature, or crontab with `curl`). Hourly is ample:
+the protocol's obligation is that withdrawals are applied within 24 hours.
 
 Every outbound request goes through a guard that refuses private, loopback and unresolvable hosts, with no development bypass. A partner must
 therefore be a real, publicly reachable node — and so must this one, since the partner verifies your requests by fetching _your_ discovery
@@ -204,8 +207,42 @@ Also: `pnpm lint`, `pnpm typecheck`, `pnpm format:check`, `pnpm build`.
 
 ## Deployment
 
-Not written yet. The app is an ordinary Next.js application — `pnpm build && pnpm start` behind any reverse proxy, with any Supabase project,
-hosted or self-hosted — and nothing in it depends on a particular host.
+The app is an ordinary Next.js application, and nothing in it depends on a particular host: `pnpm build && pnpm start` behind any reverse
+proxy works, with any Supabase project, hosted or self-hosted. `pnpm build` applies pending migrations first, so a deploy installs its own
+schema. What follows is the Vercel recipe, because that pairing is common.
+
+1. **Create the project without an integration.** Import the repository with the Next.js preset and leave the build settings at their
+   defaults: the build command must remain the package's `build` script, or the migrations are skipped. Connect an existing Supabase project by
+   entering its values as environment variables. The Supabase Marketplace integration provisions a new project instead.
+2. **Environment variables**, for Production only: everything `.env.example` marks as required, with the same values as the node's
+   `.env.local`. A preview deployment runs `pnpm build` too, and so would apply migrations to the production database.
+   `ALLOWED_DEV_ORIGINS` has no effect in a production build.
+3. **Region.** Put the functions in the region nearest the Supabase project (Settings → Functions). Every request to the node makes several
+   database calls.
+4. **The identity domain.** Add `OPENYACHT_DOMAIN` to the project's domains and create the DNS record Vercel asks for: a CNAME for a
+   subdomain. On Cloudflare, leave it DNS-only, so that Vercel can issue the certificate. The `*.vercel.app` hostname serves the admin UI;
+   federation endpoints answer only on the identity domain.
+5. **Schedule synchronisation** from the dashboard, as described under
+   [Partners and synchronisation](#partners-and-synchronisation).
+
+Moving an existing node to a new host is the same list with the same environment. The keys are in the database, so once DNS points at the new
+host, it is the same node to every partner.
+
+On Vercel's Hobby plan, a repository owned by a GitHub organization cannot be imported. Deploy with the CLI instead, from an export of the
+committed tree, so that nothing that is ignored by git is uploaded:
+
+```bash
+git archive main | tar -x -C ../node-deploy
+cd ../node-deploy
+vercel link                       # once; keep .vercel/ in this folder
+vercel env add <NAME> production  # once per variable
+vercel deploy --prod
+```
+
+To pin the region with the CLI, put a `vercel.json` containing `{ "regions": ["<region>"] }` in the export.
+
+Mind the free tiers. Vercel's Hobby plan is for non-commercial use. A free Supabase project is paused after a period without activity, and
+the hourly sync is itself activity. A brokerage running a real node wants paid plans on both.
 
 ## Security
 
