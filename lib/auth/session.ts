@@ -12,7 +12,8 @@ export type Permission =
   | "listings.manage_own"
   | "federation.manage"
   | "federation.notifications"
-  | "activity-log.view";
+  | "activity-log.view"
+  | "api-keys.manage";
 
 export interface Session {
   userId: string;

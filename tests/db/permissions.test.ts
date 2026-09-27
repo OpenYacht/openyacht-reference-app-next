@@ -42,7 +42,7 @@ beforeEach(async () => {
   await client.query("delete from public.role_permissions");
   await client.query(
     `insert into public.role_permissions (role, permission) values
-       ('admin', 'users.manage'), ('admin', 'listings.manage'), ('admin', 'activity-log.view'),
+       ('admin', 'users.manage'), ('admin', 'listings.manage'), ('admin', 'activity-log.view'), ('admin', 'api-keys.manage'),
        ('editor', 'listings.manage'), ('broker', 'listings.manage_own')`,
   );
   await client.query(
@@ -101,8 +101,9 @@ describe("The default matrix", () => {
       "federation.manage",
       "federation.notifications",
       "activity-log.view",
+      "api-keys.manage",
     ]);
-    expect(await permissionsOf(ADMIN)).toEqual(["users.manage", "listings.manage", "activity-log.view"]);
+    expect(await permissionsOf(ADMIN)).toEqual(["users.manage", "listings.manage", "activity-log.view", "api-keys.manage"]);
     expect(await permissionsOf(EDITOR)).toEqual(["listings.manage"]);
     expect(await permissionsOf(BROKER)).toEqual(["listings.manage_own"]);
     expect(await permissionsOf(VIEWER)).toEqual([]);

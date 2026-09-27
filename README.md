@@ -197,9 +197,22 @@ so no partner meets a key it cannot find; nobody needs to be told. An **emergenc
 its private half; it asks for a note, which is kept with the revoked key. Either way, a partner that _pinned_ your key will refuse the new one
 until its administrator confirms it — tell those partners first.
 
+## The data API
+
+For this node's own websites and feeds — not for partners, who use federation. `GET /api/v1/yachts` returns every yacht the node
+displays: its own active listings, with every field, and the partner listings it displays (published, no unreviewed vessel conflict, partner
+not hidden for staleness). Each is a complete document in the protocol's wire shape, plus `x_key`, `x_source` (`own` or `imported`),
+`x_provenance` and `x_attribution_text`, which a site showing a partner's listing must display when the listing's terms require it.
+`?source=own|imported` narrows it, `page` and `per_page` (at most 200) page it, and `links.next` walks it; `GET /api/v1/yachts/{x_key}`
+returns one.
+
+Keys are made under **API keys** (`api-keys.manage`), shown once and stored only as a SHA-256 digest. Send one in the `X-API-Key` header or
+as a Bearer token, from a server: there is no browser-origin allowlist, because an `Origin` header is whatever the client says it is. Each
+key has its own rate limit, answered with `429` and `Retry-After`.
+
 ## Users and roles
 
-Five roles, in rank order: `super_admin`, `admin`, `editor`, `broker`, `viewer`. What each may do is a matrix of seven permissions, which
+Five roles, in rank order: `super_admin`, `admin`, `editor`, `broker`, `viewer`. What each may do is a matrix of eight permissions, which
 a super admin edits under **Roles**:
 
 | Permission                 | Allows                                                                        | Shipped with  |

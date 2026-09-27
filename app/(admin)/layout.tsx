@@ -21,6 +21,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/">) {
           {can(session, "users.manage") && <Link href="/users">Users</Link>}
           {can(session, "users.manage", "roles.manage") && <Link href="/roles">Roles</Link>}
           {can(session, "activity-log.view") && <Link href="/activity">Activity</Link>}
+          {can(session, "api-keys.manage") && <Link href="/api-keys">API keys</Link>}
         </nav>
         <form action={signOutAction} className="flex items-center gap-3">
           <Link href="/account" className="text-muted text-sm underline-offset-4 hover:underline">
