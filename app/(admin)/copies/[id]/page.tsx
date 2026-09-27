@@ -1,10 +1,11 @@
 import { Alert, AlertContent, AlertDescription, AlertTitle, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@heroui/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireSession } from "@/lib/auth/session";
+import { can, requireSession } from "@/lib/auth/session";
 import { toCopy } from "@/lib/federation/repositories";
 import { descriptionSanitiser } from "@/lib/federation/sanitiser";
 import { userClient } from "@/lib/supabase/server";
+import { ReviewConflict } from "./review-conflict";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ const record = (value: unknown): Record<string, unknown> =>
 const text = (value: unknown) => (typeof value === "string" && value !== "" ? value : null);
 
 export default async function CopyPage({ params }: PageProps<"/copies/[id]">) {
-  await requireSession();
+  const session = await requireSession();
   const { id } = await params;
   const canonicalUri = Buffer.from(id, "base64url").toString("utf8");
 
@@ -47,13 +48,30 @@ export default async function CopyPage({ params }: PageProps<"/copies/[id]">) {
       </header>
 
       {copy.inConflict && (
-        <Alert status="danger">
+        <Alert status={copy.conflictReviewedAt === null ? "danger" : "default"}>
           <AlertContent>
             <AlertTitle>Two authorities list this vessel</AlertTitle>
             <AlertDescription>
-              Another partner&apos;s live listing carries the same hull or IMO number. Both copies are kept and neither is displayed until a person
-              has looked: this is usually a mandate changing hands, or a genuine dispute.
+              {copy.conflictReviewedAt === null
+                ? "Another partner's live listing carries the same hull or IMO number. Both copies are kept and neither is displayed until a person has looked: this is usually a mandate changing hands, or a genuine dispute."
+                : `Reviewed ${copy.conflictReviewedAt.toISOString().slice(0, 16).replace("T", " ")} UTC; displayed as its partner's policy allows. If another listing claims the vessel, it needs reviewing again.`}
+              <span className="mt-2 block">
+                Also listed as:{" "}
+                {copy.conflictsWith.map((rival, i) => (
+                  <span key={rival}>
+                    {i > 0 && ", "}
+                    <Link href={`/copies/${Buffer.from(rival, "utf8").toString("base64url")}`} className="underline underline-offset-4">
+                      {new URL(rival).hostname}
+                    </Link>
+                  </span>
+                ))}
+              </span>
             </AlertDescription>
+            {copy.conflictReviewedAt === null && can(session, "listings.manage") && (
+              <div className="mt-3">
+                <ReviewConflict canonicalUri={copy.canonicalUri} />
+              </div>
+            )}
           </AlertContent>
         </Alert>
       )}

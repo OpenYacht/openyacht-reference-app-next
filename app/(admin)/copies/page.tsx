@@ -91,7 +91,7 @@ export default async function CopiesPage({ searchParams }: PageProps<"/copies">)
                       <div className="flex flex-wrap gap-2">
                         {ended ? (
                           <Chip>ended</Chip>
-                        ) : copy.inConflict ? (
+                        ) : copy.inConflict && copy.conflictReviewedAt === null ? (
                           <Chip color="danger">held — vessel claimed by two authorities</Chip>
                         ) : copy.displayState === "published" && partner?.freshness !== "hidden" ? (
                           <Chip color="success">displayed</Chip>

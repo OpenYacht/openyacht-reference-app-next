@@ -164,6 +164,8 @@ export class SyncEngine {
         displayState: "held",
         heldReasons: ["The listing has ended."],
         inConflict: false,
+        conflictsWith: [],
+        conflictReviewedAt: null,
       });
       await this.recomputeConflicts(existing.hardIdentifiers);
       return "tombstoned";
@@ -190,7 +192,12 @@ export class SyncEngine {
       tombstonedAt: null,
       ...decideDisplay(payload, item.type, partner),
       hardIdentifiers: identifiers,
-      inConflict: false,
+      // Kept as they were; recomputeConflicts below changes them, and clears a
+      // review, only if the set of rivals has changed. A rival updating its
+      // price is not a new match.
+      inConflict: existing?.tombstonedAt === null ? existing.inConflict : false,
+      conflictsWith: existing?.tombstonedAt === null ? existing.conflictsWith : [],
+      conflictReviewedAt: existing?.tombstonedAt === null ? existing.conflictReviewedAt : null,
       unknownSlugs: unknownSlugs(payload, this.options.registry),
     };
     await this.options.copies.upsert(copy);
@@ -214,14 +221,18 @@ export class SyncEngine {
     const widened = [...new Set([...identifiers, ...touched.flatMap((copy) => copy.hardIdentifiers)])];
     const live = widened.length === identifiers.length ? touched : await this.options.copies.findLiveByHardIdentifiers(widened);
 
-    const conflicted = (copy: ListingCopy) =>
-      live.some(
-        (other) => other.partnerId !== copy.partnerId && other.hardIdentifiers.some((identifier) => copy.hardIdentifiers.includes(identifier)),
-      );
-    const toFlag = live.filter((copy) => !copy.inConflict && conflicted(copy)).map((copy) => copy.canonicalUri);
-    const toClear = live.filter((copy) => copy.inConflict && !conflicted(copy)).map((copy) => copy.canonicalUri);
-    if (toFlag.length > 0) await this.options.copies.setConflict(toFlag, true);
-    if (toClear.length > 0) await this.options.copies.setConflict(toClear, false);
+    const rivals = (copy: ListingCopy) =>
+      live
+        .filter(
+          (other) => other.partnerId !== copy.partnerId && other.hardIdentifiers.some((identifier) => copy.hardIdentifiers.includes(identifier)),
+        )
+        .map((other) => other.canonicalUri)
+        .sort();
+    const changes = live
+      .map((copy) => ({ copy, conflictsWith: rivals(copy) }))
+      .filter(({ copy, conflictsWith }) => conflictsWith.join("\n") !== [...copy.conflictsWith].sort().join("\n"))
+      .map(({ copy, conflictsWith }) => ({ canonicalUri: copy.canonicalUri, conflictsWith }));
+    if (changes.length > 0) await this.options.copies.setConflicts(changes);
   }
 }
 

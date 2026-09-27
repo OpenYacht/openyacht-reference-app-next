@@ -219,6 +219,10 @@ export interface ListingCopy {
    * that clearing a conflict never has to re-run another partner's policy.
    */
   inConflict: boolean;
+  /** The canonical URIs of the rival copies, sorted. A person's review holds for exactly this set. */
+  conflictsWith: string[];
+  /** When a person reviewed the conflict and chose to proceed (ID-9); cleared whenever the rivals change. */
+  conflictReviewedAt: Date | null;
   /** Builder or category slugs not present in the vendored registries (LS-12). */
   unknownSlugs: string[];
 }
@@ -228,7 +232,12 @@ export interface CopyRepository {
   upsert(copy: ListingCopy): Promise<void>;
   /** Live (not tombstoned) copies, from any partner, carrying any of these hard identifiers (ID-9). */
   findLiveByHardIdentifiers(identifiers: string[]): Promise<ListingCopy[]>;
-  setConflict(canonicalUris: string[], inConflict: boolean): Promise<void>;
+  /**
+   * Records each copy's new set of rivals (ID-9). Called only for copies whose
+   * set changed, and it clears any earlier review: a new match must reach a
+   * person even if an old one was dismissed.
+   */
+  setConflicts(changes: { canonicalUri: string; conflictsWith: string[] }[]): Promise<void>;
 }
 
 /** Restricted-HTML sanitiser for `descriptions[].content` (LS-5). The host supplies the implementation. */

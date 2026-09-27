@@ -142,8 +142,10 @@ export class MemoryCopies implements CopyRepository {
   async findLiveByHardIdentifiers(identifiers: string[]) {
     return [...this.rows.values()].filter((copy) => copy.tombstonedAt === null && copy.hardIdentifiers.some((id) => identifiers.includes(id)));
   }
-  async setConflict(canonicalUris: string[], inConflict: boolean) {
-    for (const canonicalUri of canonicalUris) this.rows.set(canonicalUri, { ...this.rows.get(canonicalUri)!, inConflict });
+  async setConflicts(changes: { canonicalUri: string; conflictsWith: string[] }[]) {
+    for (const { canonicalUri, conflictsWith } of changes) {
+      this.rows.set(canonicalUri, { ...this.rows.get(canonicalUri)!, inConflict: conflictsWith.length > 0, conflictsWith, conflictReviewedAt: null });
+    }
   }
 }
 

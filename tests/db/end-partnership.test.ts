@@ -18,18 +18,24 @@ let other: string;
 beforeAll(() => client.connect());
 afterAll(() => client.end());
 
-async function copy(partnerId: string, canonicalUri: string, payload: object | null, extra: { tombstoned?: boolean; identifiers?: string[] } = {}) {
+async function copy(
+  partnerId: string,
+  canonicalUri: string,
+  payload: object | null,
+  extra: { tombstoned?: boolean; identifiers?: string[]; rivals?: string[] } = {},
+) {
   await client.query(
     `insert into public.listing_copies (canonical_uri, partner_id, listing_type, status, listing_updated_at, payload, provenance,
-                                        tombstoned_at, display_state, hard_identifiers, in_conflict)
-     values ($1, $2, 'sale', 'active', '2026-09-01T10:00:00Z', $3, '{}', $4, 'published', $5, $6)`,
+                                        tombstoned_at, display_state, hard_identifiers, in_conflict, conflicts_with)
+     values ($1, $2, 'sale', 'active', '2026-09-01T10:00:00Z', $3, '{}', $4, 'published', $5, $6, $7)`,
     [
       canonicalUri,
       partnerId,
       payload === null ? null : JSON.stringify(payload),
       extra.tombstoned ? "2026-09-02T10:00:00Z" : null,
       extra.identifiers ?? [],
-      (extra.identifiers ?? []).length > 0,
+      (extra.rivals ?? []).length > 0,
+      extra.rivals ?? [],
     ],
   );
 }
@@ -51,11 +57,27 @@ beforeEach(async () => {
   ending = (await client.query(insert, ["ending.example"])).rows[0].id;
   other = (await client.query(insert, ["other.example"])).rows[0].id;
 
-  await copy(ending, uri("ending.example", 1), { usage: { display: true, expires_with_listing: true } }, { identifiers: ["hin:ABC1"] });
+  await copy(
+    ending,
+    uri("ending.example", 1),
+    { usage: { display: true, expires_with_listing: true } },
+    {
+      identifiers: ["hin:ABC1"],
+      rivals: [uri("other.example", 5)],
+    },
+  );
   await copy(ending, uri("ending.example", 2), { usage: { display: true, expires_with_listing: false } });
   await copy(ending, uri("ending.example", 3), { id: "no usage block" });
   await copy(ending, uri("ending.example", 4), null, { tombstoned: true });
-  await copy(other, uri("other.example", 5), { usage: { display: true, expires_with_listing: true } }, { identifiers: ["hin:ABC1"] });
+  await copy(
+    other,
+    uri("other.example", 5),
+    { usage: { display: true, expires_with_listing: true } },
+    {
+      identifiers: ["hin:ABC1"],
+      rivals: [uri("ending.example", 1)],
+    },
+  );
 });
 afterEach(() => client.query("rollback"));
 
@@ -109,5 +131,29 @@ describe("ID-10 ending a partnership", () => {
   it("needs federation.manage", async () => {
     await expect(asUser(EDITOR, "select public.end_partnership($1)", [ending])).rejects.toMatchObject({ code: "42501" });
     expect((await state())["1"]!.data).toBe(true);
+  });
+});
+
+describe("ID-9 reviewing a conflict", () => {
+  const reviewed = (n: number) =>
+    client
+      .query("select conflict_reviewed_at is not null as reviewed from public.listing_copies where right(canonical_uri, 1) = $1", [String(n)])
+      .then((r) => r.rows[0].reviewed as boolean);
+
+  it("is recorded by whoever manages listings, and only on a copy in conflict", async () => {
+    await asUser(EDITOR, "select public.review_copy_conflict($1)", [uri("other.example", 5)]);
+    expect(await reviewed(5)).toBe(true);
+    await expect(asUser(EDITOR, "select public.review_copy_conflict($1)", [uri("ending.example", 2)])).rejects.toMatchObject({ code: "P0002" });
+  });
+
+  it("is refused without listings.manage", async () => {
+    await client.query("delete from public.role_permissions where role = 'editor'");
+    await expect(asUser(EDITOR, "select public.review_copy_conflict($1)", [uri("other.example", 5)])).rejects.toMatchObject({ code: "42501" });
+  });
+
+  it("is cleared when the set of rivals changes", async () => {
+    await asUser(EDITOR, "select public.review_copy_conflict($1)", [uri("other.example", 5)]);
+    await asUser(SUPER_ADMIN, "select public.end_partnership($1)", [ending]);
+    expect(await reviewed(5)).toBe(false);
   });
 });

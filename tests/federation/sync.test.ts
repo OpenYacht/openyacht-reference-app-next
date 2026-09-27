@@ -318,6 +318,31 @@ describe("ID-9 vessel identity conflicts", () => {
     expect(first.copies.rows.get(uri(1))!.inConflict).toBe(false);
   });
 
+  it("keeps a person's review while the rivals are the same, and clears it when the set changes", async () => {
+    const first = await setup(() => ({ status: 200, json: page([listing(1, "2026-09-01T10:00:00Z", sameHull("US-ABC12345D404"))]) }));
+    await first.sync();
+    const other = "other-authority.example";
+    const pages = [
+      [listing(7, "2026-09-02T10:00:00Z", sameHull("US-ABC12345D404"), other)],
+      // The same rival, updated: its price moved. Not a new match.
+      [listing(7, "2026-09-03T10:00:00Z", sameHull("US-ABC12345D404"), other)],
+      // A second listing of the same hull from the same rival: a new match.
+      [listing(8, "2026-09-04T10:00:00Z", sameHull("US-ABC12345D404"), other)],
+    ];
+    const second = new FakeAuthority(other, () => ({ status: 200, json: page(pages.shift()!) }));
+    const partner = await first.partners.create({ ...first.partner, domain: other });
+    const engine = new SyncEngine({ client: clientFor(second), partners: first.partners, copies: first.copies, sanitiser, registry, clock });
+    const review = () => first.copies.rows.set(uri(1), { ...first.copies.rows.get(uri(1))!, conflictReviewedAt: NOW });
+
+    await engine.syncPartner(first.partners.get(partner.id));
+    expect(first.copies.rows.get(uri(1))!.conflictsWith).toEqual([uri(7, other)]);
+    review();
+    await engine.syncPartner(first.partners.get(partner.id));
+    expect(first.copies.rows.get(uri(1))!.conflictReviewedAt).toEqual(NOW);
+    await engine.syncPartner(first.partners.get(partner.id));
+    expect(first.copies.rows.get(uri(1))).toMatchObject({ conflictsWith: [uri(7, other), uri(8, other)].sort(), conflictReviewedAt: null });
+  });
+
   it("does not flag two listings of the same vessel from one authority — a sale and a charter listing, say", async () => {
     const { copies, sync } = await setup(() => ({
       status: 200,

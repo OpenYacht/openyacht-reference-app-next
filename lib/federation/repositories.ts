@@ -211,6 +211,8 @@ export function toCopy(row: any): ListingCopy {
     heldReasons: row.held_reasons,
     hardIdentifiers: row.hard_identifiers,
     inConflict: row.in_conflict,
+    conflictsWith: row.conflicts_with ?? [],
+    conflictReviewedAt: date(row.conflict_reviewed_at),
     unknownSlugs: row.unknown_slugs,
   };
 }
@@ -239,6 +241,10 @@ export class SupabaseCopyRepository implements CopyRepository {
         held_reasons: copy.heldReasons,
         hard_identifiers: copy.hardIdentifiers,
         in_conflict: copy.inConflict,
+        conflicts_with: copy.conflictsWith,
+        conflict_reviewed_at: copy.conflictReviewedAt?.toISOString() ?? null,
+        // Who reviewed is not the core's business; a cleared review clears it too.
+        ...(copy.conflictReviewedAt === null ? { conflict_reviewed_by: null } : {}),
         unknown_slugs: copy.unknownSlugs,
         last_received_at: new Date().toISOString(),
       },
@@ -253,9 +259,14 @@ export class SupabaseCopyRepository implements CopyRepository {
     return data.map(toCopy);
   }
 
-  async setConflict(canonicalUris: string[], inConflict: boolean): Promise<void> {
-    const { error } = await this.db.from("listing_copies").update({ in_conflict: inConflict }).in("canonical_uri", canonicalUris);
-    if (error) throw new RepositoryError(error.message);
+  async setConflicts(changes: { canonicalUri: string; conflictsWith: string[] }[]): Promise<void> {
+    for (const { canonicalUri, conflictsWith } of changes) {
+      const { error } = await this.db
+        .from("listing_copies")
+        .update({ in_conflict: conflictsWith.length > 0, conflicts_with: conflictsWith, conflict_reviewed_at: null, conflict_reviewed_by: null })
+        .eq("canonical_uri", canonicalUri);
+      if (error) throw new RepositoryError(error.message);
+    }
   }
 
   async listLiveByPartner(partnerId: string): Promise<ListingCopy[]> {
