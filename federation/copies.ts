@@ -1,7 +1,7 @@
 // Turning a received listing into a stored copy. Spec: yacht-identity.md
 // §What everyone else holds (ID-3 … ID-10), listing-schema.md (LS-5, LS-12),
 // api-design.md §Implementation Notes (acceptance policy).
-import type { AcceptancePolicy, CopyDisplayState, HtmlSanitiser, SlugRegistry } from "./ports";
+import type { AcceptancePolicy, CopyDisplayState, HtmlSanitiser, ImportTypes, SlugRegistry } from "./ports";
 
 /**
  * The payload as it will be stored: identical to what the authority sent
@@ -59,6 +59,26 @@ export interface DisplayDecision {
   heldReasons: string[];
 }
 
+/** What this node has decided about a partner's listings: all local policy, none of it on the wire. */
+export interface DisplayRules {
+  acceptancePolicy: AcceptancePolicy;
+  groupAcceptancePolicies: AcceptancePolicy[];
+  importTypes: ImportTypes;
+}
+
+const PERMISSIVENESS: Record<AcceptancePolicy, number> = { hold: 0, accept_matching: 1, accept_all: 2 };
+
+/**
+ * A partner's own policy, raised by any group it belongs to: groups exist to
+ * say "these partners are trusted", so membership can loosen a policy and
+ * never tighten one.
+ */
+export function effectiveAcceptancePolicy(rules: Pick<DisplayRules, "acceptancePolicy" | "groupAcceptancePolicies">): AcceptancePolicy {
+  return [rules.acceptancePolicy, ...rules.groupAcceptancePolicies].reduce((best, policy) =>
+    PERMISSIVENESS[policy] > PERMISSIVENESS[best] ? policy : best,
+  );
+}
+
 /**
  * Whether a synchronised copy is displayed. The policy is the partner's; the
  * first check is not a policy at all and cannot be overridden by one: a
@@ -68,11 +88,13 @@ export interface DisplayDecision {
  * policy overrides. They are not decided here because they change without the
  * copy changing; they are applied on top of this decision when displaying.
  */
-export function decideDisplay(payload: Record<string, unknown>, policy: AcceptancePolicy): DisplayDecision {
+export function decideDisplay(payload: Record<string, unknown>, type: "sale" | "charter", rules: DisplayRules): DisplayDecision {
   const reasons: string[] = [];
   const usage = isRecord(payload.usage) ? payload.usage : {};
   if (usage.display !== true) reasons.push("The authority's usage terms do not allow display.");
+  if (rules.importTypes !== "both" && rules.importTypes !== type) reasons.push(`This partner's ${type} listings are not displayed here.`);
 
+  const policy = effectiveAcceptancePolicy(rules);
   if (policy === "hold") reasons.push("This partner's listings are held for review.");
   if (policy === "accept_matching") reasons.push(...completenessGaps(payload));
 

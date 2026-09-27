@@ -1,11 +1,11 @@
 import { Alert, AlertContent, AlertDescription, AlertTitle, Card, CardContent, CardDescription, CardHeader, CardTitle, Chip } from "@heroui/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { nextAttemptAt, parseNodeIdentity, partnerFreshness } from "@/federation";
+import { effectiveAcceptancePolicy, nextAttemptAt, parseNodeIdentity, partnerFreshness } from "@/federation";
 import { requirePermission } from "@/lib/auth/session";
 import { SupabasePartnerRepository } from "@/lib/federation/repositories";
 import { userClient } from "@/lib/supabase/server";
-import { FieldGroupsForm, Introduce, PolicyForm, RateLimitForm, RefreshKeys, SyncNow, TrustAndRemoval } from "./partner-actions";
+import { FieldGroupsForm, ImportTypesForm, Introduce, PolicyForm, RateLimitForm, RefreshKeys, SyncNow, TrustAndRemoval } from "./partner-actions";
 import { DirectSharesForm, SharingScopeForm, type PickerListing } from "./partner-sharing";
 import { DEFAULT_RATE_PER_HOUR } from "@/lib/federation/handlers";
 
@@ -159,8 +159,15 @@ export default async function PartnerPage({ params }: PageProps<"/partners/[id]"
             applies to the listings already stored.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-6">
           <PolicyForm partnerId={partner.id} policy={partner.acceptancePolicy} />
+          {effectiveAcceptancePolicy(partner) !== partner.acceptancePolicy && (
+            <p className="text-sm">
+              A partner group it belongs to raises this to <span className="font-mono">{effectiveAcceptancePolicy(partner)}</span>, which is what
+              applies.
+            </p>
+          )}
+          <ImportTypesForm partnerId={partner.id} importTypes={partner.importTypes} />
         </CardContent>
       </Card>
 

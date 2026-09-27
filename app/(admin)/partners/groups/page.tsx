@@ -11,7 +11,7 @@ export default async function PartnerGroupsPage({ searchParams }: PageProps<"/pa
   const { deleted } = await searchParams;
   const supabase = await userClient();
   const [{ data: groups }, { data: members }, { data: partners }] = await Promise.all([
-    supabase.from("partner_groups").select("id, name").order("name"),
+    supabase.from("partner_groups").select("id, name, acceptance_policy").order("name"),
     supabase.from("partner_group_members").select("group_id, partner_id"),
     supabase.from("federation_partners").select("id, node_name, domain").neq("trust_level", "blocked").order("node_name"),
   ]);
@@ -51,6 +51,7 @@ export default async function PartnerGroupsPage({ searchParams }: PageProps<"/pa
                 id: group.id,
                 name: group.name,
                 memberIds: (members ?? []).filter((m) => m.group_id === group.id).map((m) => m.partner_id as number),
+                acceptancePolicy: group.acceptance_policy,
               }}
               partners={choices}
             />

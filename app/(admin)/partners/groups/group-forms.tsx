@@ -4,13 +4,21 @@ import { Checkbox, CheckboxContent, CheckboxControl, CheckboxIndicator, Descript
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { deleteGroupAction, saveGroupAction } from "../actions";
 
+const nativeField = "border-border bg-field text-foreground mt-1 w-full rounded-xl border px-3 py-2 text-sm shadow-sm";
+
 export interface GroupPartner {
   id: number;
   node_name: string;
   domain: string;
 }
 
-export function GroupForm({ group, partners }: { group: { id: number; name: string; memberIds: number[] } | null; partners: GroupPartner[] }) {
+export function GroupForm({
+  group,
+  partners,
+}: {
+  group: { id: number; name: string; memberIds: number[]; acceptancePolicy: string | null } | null;
+  partners: GroupPartner[];
+}) {
   return (
     <ActionForm action={saveGroupAction} className="flex flex-col gap-4" resetOnSuccess={group === null}>
       {group !== null && <input type="hidden" name="group_id" value={group.id} />}
@@ -34,6 +42,18 @@ export function GroupForm({ group, partners }: { group: { id: number; name: stri
           </Checkbox>
         ))}
       </div>
+      <label className="flex flex-col text-sm font-medium">
+        Acceptance policy for members
+        <select name="acceptance_policy" defaultValue={group?.acceptancePolicy ?? ""} className={nativeField}>
+          <option value="">None: each member&apos;s own policy applies</option>
+          <option value="accept_matching">Accept what is complete</option>
+          <option value="accept_all">Accept everything</option>
+          <option value="hold">Hold for review</option>
+        </select>
+        <span className="text-muted mt-1 text-xs font-normal">
+          A member&apos;s listings follow the most permissive of its own policy and its groups&apos;. A group can loosen a policy, never tighten one.
+        </span>
+      </label>
       <SubmitButton variant={group === null ? "primary" : "secondary"} size="sm" className="self-start">
         {group === null ? "Create group" : "Save group"}
       </SubmitButton>

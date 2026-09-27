@@ -188,7 +188,7 @@ export class SyncEngine {
       payload,
       provenance,
       tombstonedAt: null,
-      ...decideDisplay(payload, partner.acceptancePolicy),
+      ...decideDisplay(payload, item.type, partner),
       hardIdentifiers: identifiers,
       inConflict: false,
       unknownSlugs: unknownSlugs(payload, this.options.registry),

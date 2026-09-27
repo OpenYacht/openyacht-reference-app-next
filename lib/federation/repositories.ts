@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   decodePublicKey,
+  type AcceptancePolicy,
   type CopyRepository,
   type ListingCopy,
   type NewPartner,
@@ -28,7 +29,7 @@ interface StoredKey {
 }
 
 const PARTNER_COLUMNS =
-  "id, domain, node_uuid, node_name, keys_json, keys_fetched_at, pinned_key_id, trust_level, acceptance_policy, sync_watermark, last_ok_at, last_attempt_at, consecutive_failures, awaiting_approval, request_sent_at, created_at";
+  "id, domain, node_uuid, node_name, keys_json, keys_fetched_at, pinned_key_id, trust_level, acceptance_policy, sync_watermark, last_ok_at, last_attempt_at, consecutive_failures, awaiting_approval, request_sent_at, created_at, import_types, partner_group_members(partner_groups(acceptance_policy))";
 
 const toStoredKeys = (keys: PublishedKey[]): StoredKey[] =>
   keys.map((key) => ({ key_id: key.keyId, public_key: Buffer.from(key.publicKey).toString("base64"), created_at: key.createdAt }));
@@ -47,6 +48,10 @@ export function toPartner(row: any): Partner {
     pinnedKeyId: row.pinned_key_id,
     trustLevel: row.trust_level,
     acceptancePolicy: row.acceptance_policy,
+    groupAcceptancePolicies: ((row.partner_group_members ?? []) as { partner_groups: { acceptance_policy: AcceptancePolicy | null } }[])
+      .map((membership) => membership.partner_groups.acceptance_policy)
+      .filter((policy): policy is AcceptancePolicy => policy !== null),
+    importTypes: row.import_types ?? "both",
     syncWatermark: row.sync_watermark,
     lastOkAt: date(row.last_ok_at),
     lastAttemptAt: date(row.last_attempt_at),
@@ -130,6 +135,10 @@ export class SupabasePartnerRepository implements PartnerRepository {
     const { data, error } = await this.db.rpc("end_partnership", { p_partner_id: Number(partnerId) });
     if (error) throw new RepositoryError(`Could not end the partnership: ${error.message}`);
     return data as number;
+  }
+
+  setImportTypes(partnerId: string, importTypes: Partner["importTypes"]) {
+    return this.update(partnerId, { import_types: importTypes });
   }
 
   setAcceptancePolicy(partnerId: string, policy: Partner["acceptancePolicy"]) {

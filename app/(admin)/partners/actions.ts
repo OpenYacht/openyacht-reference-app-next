@@ -289,24 +289,70 @@ export async function setDirectSharesAction(_previous: ActionState, form: FormDa
   }
 }
 
+/** Current members of a group, read before a change so the partners who leave are re-decided too. */
+async function groupMembers(groupId: number | null): Promise<number[]> {
+  if (groupId === null) return [];
+  const { data } = await (await userClient()).from("partner_group_members").select("partner_id").eq("group_id", groupId);
+  return (data ?? []).map((row) => row.partner_id as number);
+}
+
+/** A group's acceptance policy feeds its members' display decisions, so they are made again. */
+async function redecideDisplay(partners: SupabasePartnerRepository, partnerIds: number[]): Promise<number> {
+  let changed = 0;
+  for (const id of new Set(partnerIds)) {
+    const partner = await partners.findById(String(id));
+    if (partner !== null) changed += await reapplyAcceptancePolicy(partner);
+  }
+  return changed;
+}
+
 export async function saveGroupAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await context();
+  const { partners } = await context();
   const groupId = form.get("group_id") ? Number(form.get("group_id")) : null;
   const name = String(form.get("name") ?? "").trim();
   if (name === "") return { ok: false, message: "A group needs a name." };
   const members = form.getAll("member_ids").map(Number).filter(Number.isInteger);
-  const { error } = await (await userClient()).rpc("save_partner_group", { p_group_id: groupId, p_name: name, p_member_ids: members });
+  const policy = String(form.get("acceptance_policy") ?? "");
+  const before = await groupMembers(groupId);
+  const { error } = await (
+    await userClient()
+  ).rpc("save_partner_group", {
+    p_group_id: groupId,
+    p_name: name,
+    p_member_ids: members,
+    p_acceptance_policy: POLICIES.includes(policy as AcceptancePolicy) ? policy : null,
+  });
   if (error) return { ok: false, message: error.message.includes("duplicate key") ? "There is already a group with that name." : error.message };
+  const changed = await redecideDisplay(partners, [...before, ...members]);
   revalidatePath("/partners/groups");
-  return { ok: true, message: groupId === null ? `Group "${name}" created.` : "Saved." };
+  const displayed = changed === 0 ? "" : ` ${changed} stored listing${changed === 1 ? "" : "s"} changed display state.`;
+  return { ok: true, message: (groupId === null ? `Group "${name}" created.` : "Saved.") + displayed };
 }
 
 export async function deleteGroupAction(_previous: ActionState, form: FormData): Promise<ActionState> {
-  await context();
+  const { partners } = await context();
   if (form.get("confirmed") !== "yes") return { ok: false, message: "Confirm that the group is to be deleted." };
-  const { error } = await (await userClient()).rpc("delete_partner_group", { p_group_id: Number(form.get("group_id")) });
+  const groupId = Number(form.get("group_id"));
+  const before = await groupMembers(groupId);
+  const { error } = await (await userClient()).rpc("delete_partner_group", { p_group_id: groupId });
   if (error) return { ok: false, message: error.message };
+  await redecideDisplay(partners, before);
   // The form lived in the deleted group's card; the page reports instead.
   revalidatePath("/partners/groups");
   redirect("/partners/groups?deleted=1");
+}
+
+export async function setImportTypesAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  try {
+    const { partners } = await context();
+    const partner = await loadPartner(partners, form);
+    const value = String(form.get("import_types"));
+    const importTypes = value === "sale" || value === "charter" ? value : "both";
+    await partners.setImportTypes(partner.id, importTypes);
+    const changed = await reapplyAcceptancePolicy({ ...partner, importTypes });
+    revalidatePath(`/partners/${partner.id}`);
+    return { ok: true, message: `Saved. ${changed} stored listing${changed === 1 ? "" : "s"} changed display state.` };
+  } catch (error) {
+    return explain(error);
+  }
 }

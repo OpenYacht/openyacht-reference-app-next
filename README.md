@@ -143,7 +143,8 @@ default). Approving the partner again starts with a cold sync, which brings back
 
 **Synchronising is not publishing.** Every listing a partner shares is stored as a copy, with its provenance, and kept current — including
 withdrawals, which drop the stored data. Whether a copy is _displayed_ is a per-partner policy: hold everything, accept what arrives complete,
-or accept everything. Three things no policy overrides: a listing whose usage terms forbid display, a vessel that two authorities both claim
+or accept everything. A partner group can carry a policy too; a member follows the most permissive of its own and its groups'. A partner can
+also be limited to its sale or its charter listings, which are still stored. Three things no policy overrides: a listing whose usage terms forbid display, a vessel that two authorities both claim
 (both copies are kept and flagged for a person), and a partner that has been unreachable for 30 days.
 
 Next.js has no scheduler, so sync runs when something calls `POST /api/internal/sync` with `INTERNAL_API_SECRET`:

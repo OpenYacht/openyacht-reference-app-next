@@ -9,6 +9,11 @@ import {
   FieldError,
   Input,
   Label,
+  Radio,
+  RadioContent,
+  RadioControl,
+  RadioGroup,
+  RadioIndicator,
   TextArea,
   TextField,
 } from "@heroui/react";
@@ -19,6 +24,7 @@ import {
   refreshKeysAction,
   removePartnerAction,
   setFieldGroupsAction,
+  setImportTypesAction,
   setRateLimitAction,
   setPolicyAction,
   setTrustAction,
@@ -45,6 +51,37 @@ export function PolicyForm({ partnerId, policy }: { partnerId: string; policy: s
       <PolicyOptions defaultValue={policy} />
       <SubmitButton variant="secondary" className="self-start">
         Save policy
+      </SubmitButton>
+    </ActionForm>
+  );
+}
+
+const IMPORT_TYPES = [
+  ["both", "Sale and charter"],
+  ["sale", "Sale only"],
+  ["charter", "Charter only"],
+] as const;
+
+export function ImportTypesForm({ partnerId, importTypes }: { partnerId: string; importTypes: string }) {
+  return (
+    <ActionForm action={setImportTypesAction}>
+      <Id partnerId={partnerId} />
+      <RadioGroup name="import_types" defaultValue={importTypes}>
+        <Label>Which of their listings are displayed here</Label>
+        <Description>Every listing is still stored and kept current; widening this later displays the rest without a re-sync.</Description>
+        {IMPORT_TYPES.map(([value, label]) => (
+          <Radio key={value} value={value}>
+            <RadioContent>
+              <RadioControl>
+                <RadioIndicator />
+              </RadioControl>
+              <Label>{label}</Label>
+            </RadioContent>
+          </Radio>
+        ))}
+      </RadioGroup>
+      <SubmitButton variant="secondary" className="self-start">
+        Save listing types
       </SubmitButton>
     </ActionForm>
   );

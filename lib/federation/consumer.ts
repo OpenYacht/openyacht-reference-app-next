@@ -97,7 +97,7 @@ export async function reapplyAcceptancePolicy(partner: Partner): Promise<number>
   let changed = 0;
   for (const copy of await copies.listLiveByPartner(partner.id)) {
     if (copy.payload === null) continue;
-    const decision = decideDisplay(copy.payload, partner.acceptancePolicy);
+    const decision = decideDisplay(copy.payload, copy.type, partner);
     if (decision.displayState === copy.displayState && decision.heldReasons.join("|") === copy.heldReasons.join("|")) continue;
     await copies.setDisplay(copy.canonicalUri, decision);
     changed++;

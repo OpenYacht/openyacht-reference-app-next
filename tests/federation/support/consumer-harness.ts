@@ -67,6 +67,8 @@ export class MemoryPartners implements PartnerRepository {
     const partner: Partner = {
       ...input,
       id: `partner-${this.rows.size + 1}`,
+      groupAcceptancePolicies: [],
+      importTypes: "both",
       keysFetchedAt: NOW,
       syncWatermark: null,
       lastOkAt: null,

@@ -125,12 +125,22 @@ export interface OutboundHttp {
  */
 export type AcceptancePolicy = "accept_all" | "accept_matching" | "hold";
 
+/**
+ * Which of a partner's listing types this node displays. Local, like the
+ * acceptance policy beside it: every copy is still stored, so loosening it
+ * later displays the backlog without a re-sync.
+ */
+export type ImportTypes = "both" | "sale" | "charter";
+
 /** A partner as the consumer role sees it: the verifier's record plus sync state. */
 export interface Partner extends PartnerRecord {
   id: string;
   nodeName: string;
   keysFetchedAt: Date;
   acceptancePolicy: AcceptancePolicy;
+  /** The acceptance policies of the partner groups it belongs to; the most permissive of these and its own applies. */
+  groupAcceptancePolicies: AcceptancePolicy[];
+  importTypes: ImportTypes;
   /** `updated_since` for the next poll; null means a cold sync. */
   syncWatermark: string | null;
   lastOkAt: Date | null;
