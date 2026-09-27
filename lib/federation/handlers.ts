@@ -13,12 +13,15 @@ import {
   HEADER_NODE,
   IdentityConfigError,
   isIdentityHost,
+  parseFeedItem,
   parseFeedQuery,
+  parsePublicHttpsUrl,
   pathAndQueryVariants,
   UUID_PATTERN,
   WELL_KNOWN_PATH,
   type Clock,
   type ErrorCode,
+  type FeedItem,
   type InboundRequest,
   type ListingFeedSource,
   type NodeIdentity,
@@ -34,6 +37,10 @@ export interface InboundFederation {
   verify(request: InboundRequest): Promise<VerificationResult>;
   /** Stores a partnership request where the administrator who approves partners will see it. */
   recordPartnerRequest(domain: string, request: { message: string | null; contactEmail: string | null }): Promise<void>;
+  /** API-10, authority side: the partner's push callback, or null to remove it. */
+  setPushCallback?(domain: string, callback: string | null): Promise<void>;
+  /** API-11, consumer side: applies a pushed item from a partner this node subscribed to. */
+  applyDelivery?(domain: string, item: FeedItem): Promise<string | "not_subscribed">;
   /** One line per signed request: who, what, and how verification ended. Must never throw. */
   log(entry: {
     requestId: string;
@@ -101,6 +108,8 @@ const MAX_EMAIL_LENGTH = 320;
 interface GuardContext {
   identity: NodeIdentity;
   nodeUuid: string;
+  /** Whether this node advertises push subscriptions (a setting, off by default). */
+  pushEnabled: boolean;
 }
 
 interface SignedContext extends GuardContext {
@@ -109,6 +118,9 @@ interface SignedContext extends GuardContext {
 }
 
 export function createFederationHandlers(deps: FederationDeps) {
+  // Offered only when switched on and actually served.
+  const pushOffered = (enabled: boolean) => enabled && deps.inbound?.setPushCallback !== undefined;
+
   const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
     new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
 
@@ -175,7 +187,7 @@ export function createFederationHandlers(deps: FederationDeps) {
       );
       return new Response("Node identity domain changed since setup; see the server log.", { status: 500 });
     }
-    return respond({ identity, nodeUuid: state.nodeUuid });
+    return respond({ identity, nodeUuid: state.nodeUuid, pushEnabled: state.pushEnabled === true });
   }
 
   /**
@@ -186,10 +198,16 @@ export function createFederationHandlers(deps: FederationDeps) {
    * `allowProvisional` is for the one route a not-yet-approved partner must be
    * able to reach: the partnership request itself.
    */
-  function signed(request: Request, options: { allowProvisional: boolean }, respond: (context: SignedContext) => Promise<Response> | Response) {
+  function signed(
+    request: Request,
+    options: { allowProvisional: boolean; onlyWithPush?: boolean },
+    respond: (context: SignedContext) => Promise<Response> | Response,
+  ) {
     return guarded(request, async (context) => {
       const inbound = deps.inbound;
       if (inbound === undefined) return errorResponse("NOT_FOUND", "No such federation endpoint.");
+      // A feature that is switched off is an unknown path, before any authentication.
+      if (options.onlyWithPush && !context.pushEnabled) return errorResponse("NOT_FOUND", "No such federation endpoint.");
 
       const requestId = deps.requestId();
       const url = new URL(request.url);
@@ -244,7 +262,7 @@ export function createFederationHandlers(deps: FederationDeps) {
   return {
     /** GET /.well-known/openyacht (FP-1, FP-5). */
     wellKnown: (request: Request) =>
-      guarded(request, async ({ identity, nodeUuid }) => {
+      guarded(request, async ({ identity, nodeUuid, pushEnabled }) => {
         const address = clientAddress(request);
         const rate = address === null ? undefined : await deps.discoveryLimiter?.take(address, DISCOVERY_RATE);
         if (rate !== undefined && !rate.allowed) return rateLimited(rate.retryAfterSeconds);
@@ -255,14 +273,17 @@ export function createFederationHandlers(deps: FederationDeps) {
             software: deps.software,
             keys: await deps.store.listPublishedKeys(),
             // Listed only when the route is really served.
-            optionalEndpoints: { partners: deps.inbound !== undefined },
+            optionalEndpoints: { partners: deps.inbound !== undefined, subscriptions: pushOffered(pushEnabled) },
             now: deps.clock.now(),
           }),
         );
       }),
 
     /** GET /openyacht/v1/capabilities — unsigned (API-6). */
-    capabilities: (request: Request) => guarded(request, () => json(buildCapabilities({ features: FEATURES, limits: LIMITS }))),
+    capabilities: (request: Request) =>
+      guarded(request, ({ pushEnabled }) =>
+        json(buildCapabilities({ features: { ...FEATURES, subscriptions: pushOffered(pushEnabled) }, limits: LIMITS })),
+      ),
 
     /** GET /openyacht/v1/health — unsigned, liveness only (API-6). */
     health: (request: Request) => guarded(request, () => json(buildHealth(deps.clock.now()))),
@@ -327,6 +348,59 @@ export function createFederationHandlers(deps: FederationDeps) {
         if (found === null) return errorResponse("NOT_FOUND", "No such listing.");
         if (found === "gone") return errorResponse("GONE", "This listing ended more than twelve months ago.");
         return json(found);
+      }),
+
+    /**
+     * POST and DELETE /openyacht/v1/subscriptions (API-10): a verified
+     * partner registers, or removes, the one HTTPS callback this node pushes
+     * its changes to. The latest registration wins; removing is idempotent.
+     */
+    subscriptions: (request: Request) =>
+      signed(request, { allowProvisional: false, onlyWithPush: true }, async ({ partner, body }) => {
+        const setCallback = deps.inbound?.setPushCallback;
+        if (setCallback === undefined) return errorResponse("NOT_FOUND", "No such federation endpoint.");
+        if (request.method === "DELETE") {
+          await setCallback(partner.domain, null);
+          return new Response(null, { status: 204, headers: { "cache-control": "no-store" } });
+        }
+        let callback: URL;
+        try {
+          const parsed: unknown = JSON.parse(Buffer.from(body).toString("utf8"));
+          const value = typeof parsed === "object" && parsed !== null ? (parsed as Record<string, unknown>).callback : undefined;
+          // The same rules as any partner-supplied URL: https, a bare public
+          // hostname, no port, no credentials. Checked again at every send.
+          callback = parsePublicHttpsUrl(typeof value === "string" ? value : "");
+        } catch (error) {
+          return errorResponse(
+            "VALIDATION_ERROR",
+            `"callback" must be a public https URL: ${error instanceof Error ? error.message : "unreadable body"}`,
+          );
+        }
+        await setCallback(partner.domain, callback.toString());
+        return new Response(null, { status: 204, headers: { "cache-control": "no-store" } });
+      }),
+
+    /**
+     * POST /openyacht/v1/inbox (API-11): a listing or tombstone pushed by a
+     * partner this node subscribed to. It is applied exactly like a polled
+     * item, and a repeat of the state already held changes nothing. Anyone
+     * this node did not subscribe to is told NOT_FOUND.
+     */
+    inbox: (request: Request) =>
+      signed(request, { allowProvisional: false }, async ({ partner, body }) => {
+        const apply = deps.inbound?.applyDelivery;
+        if (apply === undefined) return errorResponse("NOT_FOUND", "No such federation endpoint.");
+        let document: unknown;
+        try {
+          document = JSON.parse(Buffer.from(body).toString("utf8"));
+        } catch {
+          return errorResponse("VALIDATION_ERROR", "The body is not JSON.");
+        }
+        const item = parseFeedItem(document, partner.domain);
+        if ("reason" in item) return errorResponse("VALIDATION_ERROR", `Not a listing or tombstone this partner may send: ${item.reason}`);
+        const outcome = await apply(partner.domain, item);
+        if (outcome === "not_subscribed") return errorResponse("NOT_FOUND", "No such federation endpoint.");
+        return json({ status: "received", outcome });
       }),
 
     /**

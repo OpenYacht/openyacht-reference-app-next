@@ -5,7 +5,17 @@ import { effectiveAcceptancePolicy, nextAttemptAt, parseNodeIdentity, partnerFre
 import { requirePermission } from "@/lib/auth/session";
 import { SupabasePartnerRepository } from "@/lib/federation/repositories";
 import { userClient } from "@/lib/supabase/server";
-import { FieldGroupsForm, ImportTypesForm, Introduce, PolicyForm, RateLimitForm, RefreshKeys, SyncNow, TrustAndRemoval } from "./partner-actions";
+import {
+  FieldGroupsForm,
+  ImportTypesForm,
+  Introduce,
+  PolicyForm,
+  PushSubscription,
+  RateLimitForm,
+  RefreshKeys,
+  SyncNow,
+  TrustAndRemoval,
+} from "./partner-actions";
 import { DirectSharesForm, SharingScopeForm, type PickerListing } from "./partner-sharing";
 import { DEFAULT_RATE_PER_HOUR } from "@/lib/federation/handlers";
 
@@ -24,7 +34,9 @@ export default async function PartnerPage({ params }: PageProps<"/partners/[id]"
   // What the partner said when it introduced itself, if it did.
   const { data: received } = await supabase
     .from("federation_partners")
-    .select("request_message, request_contact_email, requested_at, first_contact_at, field_groups, rate_per_hour, sharing_scope")
+    .select(
+      "request_message, request_contact_email, requested_at, first_contact_at, field_groups, rate_per_hour, sharing_scope, push_callback_url, push_callback_registered_at, push_last_delivered_at, push_last_failed_at, push_last_error",
+    )
     .eq("id", partner.id)
     .maybeSingle();
 
@@ -168,6 +180,31 @@ export default async function PartnerPage({ params }: PageProps<"/partners/[id]"
             </p>
           )}
           <ImportTypesForm partnerId={partner.id} importTypes={partner.importTypes} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Push</CardTitle>
+          <CardDescription>
+            Optional, both ways (API-10, API-11). A push is a hint that arrives sooner; polling carries on underneath it.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4 text-sm">
+          <div className="flex flex-col gap-2">
+            <p>
+              {partner.pushSubscribedAt === null
+                ? "Their changes reach this node when it polls them, every hour."
+                : `This node receives their changes by push, since ${when(partner.pushSubscribedAt)}, and polls them once a day to reconcile.`}
+            </p>
+            <PushSubscription partnerId={partner.id} subscribed={partner.pushSubscribedAt !== null} />
+          </div>
+          <p>
+            {received?.push_callback_url
+              ? `They receive this node's changes by push at ${received.push_callback_url}. Last delivered: ${when(received.push_last_delivered_at ? new Date(received.push_last_delivered_at) : null)}.`
+              : "They have not asked for this node's changes by push."}
+            {received?.push_last_failed_at && ` Last failure: ${when(new Date(received.push_last_failed_at))} (${received.push_last_error}).`}
+          </p>
         </CardContent>
       </Card>
 

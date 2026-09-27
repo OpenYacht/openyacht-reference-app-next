@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { BlockedOutboundHost, PartnerError, WellKnownError, type AcceptancePolicy, type Partner } from "@/federation";
+import { BlockedOutboundHost, parseNodeIdentity, PartnerError, WellKnownError, type AcceptancePolicy, type Partner } from "@/federation";
 import { requirePermission, type Session } from "@/lib/auth/session";
 import { partnerService, reapplyAcceptancePolicy, syncPartner } from "@/lib/federation/consumer";
 import { RepositoryError, SupabasePartnerRepository } from "@/lib/federation/repositories";
@@ -352,6 +352,38 @@ export async function setImportTypesAction(_previous: ActionState, form: FormDat
     const changed = await reapplyAcceptancePolicy({ ...partner, importTypes });
     revalidatePath(`/partners/${partner.id}`);
     return { ok: true, message: `Saved. ${changed} stored listing${changed === 1 ? "" : "s"} changed display state.` };
+  } catch (error) {
+    return explain(error);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Push subscriptions (API-11): this node subscribing to a partner's pushes.
+// ---------------------------------------------------------------------------
+
+export async function subscribeAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  try {
+    const { partners } = await context();
+    const partner = await loadPartner(partners, form);
+    const inbox = `https://${parseNodeIdentity(process.env).domain}/openyacht/v1/inbox`;
+    const outcome = await partnerService(partners).subscribe(partner, inbox);
+    revalidatePath(`/partners/${partner.id}`);
+    return outcome === "subscribed"
+      ? { ok: true, message: "Subscribed. Their changes are pushed here as they happen, and they are still polled once a day." }
+      : { ok: true, message: "They do not offer push subscriptions. They stay on the polling schedule." };
+  } catch (error) {
+    return explain(error);
+  }
+}
+
+export async function unsubscribeAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  try {
+    const { partners } = await context();
+    const partner = await loadPartner(partners, form);
+    const { remote, detail } = await partnerService(partners).unsubscribe(partner);
+    revalidatePath(`/partners/${partner.id}`);
+    const told = remote === "failed" ? ` They could not be told (${detail}); their pushes are refused here from now on.` : "";
+    return { ok: true, message: `Unsubscribed. They are polled hourly again.${told}` };
   } catch (error) {
     return explain(error);
   }

@@ -9,6 +9,8 @@ export interface NodeState {
   /** The identity domain recorded when setup completed. */
   identityDomain: string | null;
   setupCompleted: boolean;
+  /** Whether push subscriptions are advertised (API-10). */
+  pushEnabled?: boolean;
 }
 
 export interface NodeStore {
@@ -21,12 +23,16 @@ export class NodeStoreError extends Error {}
 
 export const supabaseNodeStore: NodeStore = {
   async getState() {
-    const { data, error } = await serviceClient().from("node_settings").select("node_uuid, identity_domain, setup_completed_at").single();
+    const { data, error } = await serviceClient()
+      .from("node_settings")
+      .select("node_uuid, identity_domain, setup_completed_at, push_enabled")
+      .single();
     if (error) throw new NodeStoreError(`Cannot read node_settings: ${error.message}. Have the migrations been applied?`);
     return {
       nodeUuid: data.node_uuid,
       identityDomain: data.identity_domain,
       setupCompleted: data.setup_completed_at !== null,
+      pushEnabled: data.push_enabled === true,
     };
   },
 

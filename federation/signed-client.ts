@@ -34,13 +34,31 @@ export class SignedClient {
     return this.send("POST", domain, path, Buffer.from(JSON.stringify(body), "utf8"));
   }
 
+  delete(domain: string, path: string): Promise<FederationResponse> {
+    return this.send("DELETE", domain, path);
+  }
+
+  /**
+   * A push delivery (API-10): a signed POST to a partner's registered callback.
+   * The signing string takes the callback's own host and path, so the
+   * receiver verifies it by the standard procedure. The callback was checked
+   * when it was registered; the guarded client checks the address again as it
+   * connects.
+   */
+  postTo(url: URL, body: unknown): Promise<FederationResponse> {
+    return this.sendTo("POST", url, Buffer.from(JSON.stringify(body), "utf8"));
+  }
+
   /** Unsigned GET, for `capabilities` and `health` (API-6). */
   async getUnsigned(domain: string, path: string): Promise<FederationResponse> {
     return toFederationResponse(await this.http.request({ method: "GET", url: new URL(`https://${domain.toLowerCase()}${path}`) }));
   }
 
-  private async send(method: "GET" | "POST", domain: string, pathAndQuery: string, body?: Uint8Array): Promise<FederationResponse> {
-    const url = new URL(`https://${domain.toLowerCase()}${pathAndQuery}`);
+  private send(method: "GET" | "POST" | "DELETE", domain: string, pathAndQuery: string, body?: Uint8Array): Promise<FederationResponse> {
+    return this.sendTo(method, new URL(`https://${domain.toLowerCase()}${pathAndQuery}`), body);
+  }
+
+  private async sendTo(method: "GET" | "POST" | "DELETE", url: URL, body?: Uint8Array): Promise<FederationResponse> {
     const signer = await this.signer();
     const headers: Record<string, string> = { ...signer.sign({ method, url, body }) };
     if (body !== undefined) headers["content-type"] = "application/json";

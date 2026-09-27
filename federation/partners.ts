@@ -142,6 +142,48 @@ export class PartnerService {
   }
 
   /**
+   * Asks the partner to push its changes here (API-11). Its capabilities are
+   * read first (API-7): a partner that does not offer pushes stays on the
+   * polling schedule, which is not a failure. Refused for a partner not
+   * approved here, because the inbox would refuse its pushes.
+   */
+  async subscribe(partner: Partner, callback: string): Promise<"subscribed" | "not_offered"> {
+    if (partner.trustLevel !== "verified") throw new PartnerError("Approve this partner first: its pushes would be refused until then.");
+    const capabilities = await this.options.client.getUnsigned(partner.domain, `${API_BASE_PATH}/capabilities`);
+    const features = isRecord(capabilities.json) && isRecord(capabilities.json.features) ? capabilities.json.features : {};
+    if (capabilities.status !== 200 || features.subscriptions !== true) return "not_offered";
+
+    const response = await this.options.client.post(partner.domain, `${API_BASE_PATH}/subscriptions`, { callback });
+    if (response.status < 200 || response.status >= 300) {
+      throw new PartnerError(
+        `${partner.domain} refused the subscription: ${response.status} ${response.errorCode ?? ""} ${response.errorMessage ?? ""}`.trim(),
+      );
+    }
+    await this.options.partners.setPushSubscribed(partner.id, this.clock.now());
+    return "subscribed";
+  }
+
+  /**
+   * Stops the partner's pushes. The local record is always cleared — it is
+   * what gates the inbox and the daily poll, so clearing it is what "stop
+   * receiving pushes" means — and the partner is told if it can be reached.
+   * A partner that is unreachable, or has blocked this node, must not leave
+   * the subscription stuck.
+   */
+  async unsubscribe(partner: Partner): Promise<{ remote: "removed" | "already_gone" | "failed"; detail?: string }> {
+    try {
+      const response = await this.options.client.delete(partner.domain, `${API_BASE_PATH}/subscriptions`);
+      if (response.status >= 200 && response.status < 300) return { remote: "removed" };
+      if ([404, 405, 410].includes(response.status)) return { remote: "already_gone" };
+      return { remote: "failed", detail: `${response.status} ${response.errorCode ?? ""}`.trim() };
+    } catch (error) {
+      return { remote: "failed", detail: error instanceof Error ? error.message : String(error) };
+    } finally {
+      await this.options.partners.setPushSubscribed(partner.id, null);
+    }
+  }
+
+  /**
    * Ends a partnership. Blocking is how a partnership that has delivered
    * listings ends — the partner row stays, as the provenance of what it sent —
    * and ending it ends the use of every listing whose terms say so (ID-10).

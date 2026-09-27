@@ -29,7 +29,7 @@ interface StoredKey {
 }
 
 const PARTNER_COLUMNS =
-  "id, domain, node_uuid, node_name, keys_json, keys_fetched_at, pinned_key_id, trust_level, acceptance_policy, sync_watermark, last_ok_at, last_attempt_at, consecutive_failures, awaiting_approval, request_sent_at, created_at, import_types, partner_group_members(partner_groups(acceptance_policy))";
+  "id, domain, node_uuid, node_name, keys_json, keys_fetched_at, pinned_key_id, trust_level, acceptance_policy, sync_watermark, last_ok_at, last_attempt_at, consecutive_failures, awaiting_approval, request_sent_at, created_at, import_types, push_subscribed_at, partner_group_members(partner_groups(acceptance_policy))";
 
 const toStoredKeys = (keys: PublishedKey[]): StoredKey[] =>
   keys.map((key) => ({ key_id: key.keyId, public_key: Buffer.from(key.publicKey).toString("base64"), created_at: key.createdAt }));
@@ -52,6 +52,7 @@ export function toPartner(row: any): Partner {
       .map((membership) => membership.partner_groups.acceptance_policy)
       .filter((policy): policy is AcceptancePolicy => policy !== null),
     importTypes: row.import_types ?? "both",
+    pushSubscribedAt: date(row.push_subscribed_at ?? null),
     syncWatermark: row.sync_watermark,
     lastOkAt: date(row.last_ok_at),
     lastAttemptAt: date(row.last_attempt_at),
@@ -135,6 +136,10 @@ export class SupabasePartnerRepository implements PartnerRepository {
     const { data, error } = await this.db.rpc("end_partnership", { p_partner_id: Number(partnerId) });
     if (error) throw new RepositoryError(`Could not end the partnership: ${error.message}`);
     return data as number;
+  }
+
+  setPushSubscribed(partnerId: string, at: Date | null) {
+    return this.update(partnerId, { push_subscribed_at: at?.toISOString() ?? null });
   }
 
   setImportTypes(partnerId: string, importTypes: Partner["importTypes"]) {

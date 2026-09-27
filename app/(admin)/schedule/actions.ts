@@ -36,3 +36,17 @@ export async function unscheduleSyncAction(_previous: ActionState, form: FormDat
   revalidatePath("/");
   return { ok: true, message: "Scheduled synchronisation has stopped. Copies go stale until it is registered again or `pnpm sync` is run." };
 }
+
+export async function setPushEnabledAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  await requirePermission("federation.manage");
+  const enabled = form.get("enabled") === "yes";
+  const { error } = await (await userClient()).rpc("set_push_enabled", { p_enabled: enabled });
+  if (error) return failed(error.message);
+  revalidatePath("/");
+  return {
+    ok: true,
+    message: enabled
+      ? "Push subscriptions are offered. Partners that subscribe are sent each change within a minute or so."
+      : "Push subscriptions are no longer offered, and waiting deliveries were dropped. Partners keep polling as before.",
+  };
+}

@@ -135,3 +135,31 @@ export const supabaseFeedSource: ListingFeedSource = {
     return serve(listing, domain, partner.grants, await urlsFor([listing], partner.grants));
   },
 };
+
+/**
+ * The payload of one push delivery (API-10): what the feed would say about
+ * this listing to this partner right now — the feed's own decision, narrowed
+ * to one pair — or null when there is nothing to tell it. Decided at send
+ * time, so a retry after a later edit carries the later state.
+ */
+export async function pushPayload(partnerId: number, listingId: number): Promise<ServedItem | null> {
+  const { domain } = parseNodeIdentity(process.env);
+  const { data: partnerRow, error: partnerError } = await serviceClient()
+    .from("federation_partners")
+    .select("field_groups")
+    .eq("id", partnerId)
+    .maybeSingle();
+  if (partnerError) throw new Error(`Cannot read the partner: ${partnerError.message}`);
+  if (partnerRow === null) return null;
+  const grants = new Set(partnerRow.field_groups as FieldGroup[]);
+
+  const { data, error } = await serviceClient().rpc("feed_row_for", { p_partner_id: partnerId, p_listing_id: listingId });
+  if (error) throw new Error(`Cannot read the feed row: ${error.message}`);
+  const row = (data as FeedRow[])[0];
+  if (row === undefined) return null;
+  if (row.kind === "tombstone") {
+    return serializeTombstone(domain, row.listing_uuid, row.tombstone_status ?? "withdrawn", new Date(row.tombstone_at ?? row.effective_at));
+  }
+  const listing = (await loadListings([row.listing_id])).get(row.listing_id);
+  return listing === undefined ? null : serve(listing, domain, grants, await urlsFor([listing], grants));
+}

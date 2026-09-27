@@ -49,7 +49,21 @@ export function nextAttemptAt(partner: { consecutiveFailures: number; lastAttemp
   return new Date(partner.lastAttemptAt.getTime() + delay);
 }
 
-export function isSyncDue(partner: { consecutiveFailures: number; lastAttemptAt: Date | null }, now: Date): boolean {
+/**
+ * Whether to poll a partner now. The failure backoff comes first. A partner
+ * that pushes its changes here is still polled, once a day, because a push
+ * is at-least-once and missed deliveries are a fact of life (API-11): the
+ * subscription never replaces `updated_since`.
+ */
+export function isSyncDue(
+  partner: { consecutiveFailures: number; lastAttemptAt: Date | null; pushSubscribedAt?: Date | null; lastOkAt?: Date | null },
+  now: Date,
+): boolean {
   const next = nextAttemptAt(partner);
-  return next === null || next.getTime() <= now.getTime();
+  if (next !== null) return next.getTime() <= now.getTime();
+  if (partner.pushSubscribedAt != null && partner.lastOkAt != null) {
+    // Five minutes' tolerance, so an hourly timer does not slip a whole hour.
+    return now.getTime() - partner.lastOkAt.getTime() >= 24 * HOUR_MS - 5 * 60_000;
+  }
+  return true;
 }

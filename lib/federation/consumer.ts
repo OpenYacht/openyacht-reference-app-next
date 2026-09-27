@@ -10,6 +10,7 @@ import {
   signListingRequest,
   SyncEngine,
   WellKnownClient,
+  type FeedItem,
   type ListingAction,
   type Partner,
   type PartnerRepository,
@@ -75,6 +76,19 @@ function syncEngine() {
       registry: vendoredRegistry,
     }),
   };
+}
+
+/** API-11: a pushed item from a partner, applied like a polled one. */
+export async function applyPushedItem(partnerDomain: string, item: FeedItem): Promise<string | "not_subscribed"> {
+  const { partners, engine } = syncEngine();
+  const partner = await partners.findByDomain(partnerDomain);
+  if (partner === null || partner.pushSubscribedAt === null) return "not_subscribed";
+  return engine.applyDelivery(partner, item);
+}
+
+/** API-10: one signed delivery to a partner's callback. */
+export function postToCallback(callback: URL, payload: unknown) {
+  return signedClient.postTo(callback, payload);
 }
 
 export async function syncPartner(partnerId: string): Promise<SyncOutcome> {

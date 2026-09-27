@@ -25,6 +25,8 @@ import {
   removePartnerAction,
   setFieldGroupsAction,
   setImportTypesAction,
+  subscribeAction,
+  unsubscribeAction,
   setRateLimitAction,
   setPolicyAction,
   setTrustAction,
@@ -213,6 +215,17 @@ export function RateLimitForm({ partnerId, ratePerHour, defaultPerHour }: { part
       </TextField>
       <SubmitButton variant="secondary" className="self-start">
         Save limit
+      </SubmitButton>
+    </ActionForm>
+  );
+}
+
+export function PushSubscription({ partnerId, subscribed }: { partnerId: string; subscribed: boolean }) {
+  return (
+    <ActionForm action={subscribed ? unsubscribeAction : subscribeAction}>
+      <Id partnerId={partnerId} />
+      <SubmitButton variant="secondary" size="sm" className="self-start" pendingLabel="Asking them…">
+        {subscribed ? "Stop receiving their pushes" : "Receive their changes by push"}
       </SubmitButton>
     </ActionForm>
   );

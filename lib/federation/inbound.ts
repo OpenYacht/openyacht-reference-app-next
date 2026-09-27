@@ -1,7 +1,7 @@
 import "server-only";
 import { currentSigningKeyId, InMemoryReplayGuard, parseNodeIdentity, Verifier, type PartnerStore } from "@/federation";
 import { serviceClient } from "@/lib/supabase/service";
-import { wellKnown } from "./consumer";
+import { applyPushedItem, wellKnown } from "./consumer";
 import type { InboundFederation } from "./handlers";
 import { SupabasePartnerRepository } from "./repositories";
 
@@ -95,6 +95,18 @@ export const inboundFederation: InboundFederation = {
       },
     }).verify(request);
   },
+
+  async setPushCallback(domain, callback) {
+    // The latest registration wins; removing it stops deliveries at the next
+    // run, which drops anything still queued for a partner with no callback.
+    const { error } = await serviceClient()
+      .from("federation_partners")
+      .update({ push_callback_url: callback, push_callback_registered_at: callback === null ? null : new Date().toISOString() })
+      .eq("domain", domain);
+    if (error) throw new Error(`Cannot record the push callback: ${error.message}`);
+  },
+
+  applyDelivery: applyPushedItem,
 
   async recordPartnerRequest(domain, request) {
     const repository = new SupabasePartnerRepository(serviceClient());

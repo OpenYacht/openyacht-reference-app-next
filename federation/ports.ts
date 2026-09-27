@@ -149,6 +149,8 @@ export interface Partner extends PartnerRecord {
   /** The partner answered PARTNER_PROVISIONAL: reachable, waiting on a human there. */
   awaitingApproval: boolean;
   requestSentAt: Date | null;
+  /** When this node subscribed to the partner's pushes (API-11); null when it polls only. */
+  pushSubscribedAt: Date | null;
   createdAt: Date;
 }
 
@@ -176,6 +178,8 @@ export interface PartnerRepository {
    * starts with a cold sync. Returns how many copies were ended.
    */
   endPartnership(partnerId: string): Promise<number>;
+  /** Records that this node subscribed to (a date) or left (null) the partner's pushes. */
+  setPushSubscribed(partnerId: string, at: Date | null): Promise<void>;
   /** FP-11: records the new UUID and downgrades in one step. */
   recordUuidChange(partnerId: string, newUuid: string): Promise<void>;
   markRequestSent(partnerId: string, at: Date): Promise<void>;

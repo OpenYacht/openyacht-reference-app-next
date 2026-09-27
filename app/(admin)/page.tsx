@@ -6,6 +6,7 @@ import { optionalEnv } from "@/lib/env";
 import { userClient } from "@/lib/supabase/server";
 import { FederationAlerts, type FederationAlert } from "./alerts/federation-alerts";
 import { KeyRotation } from "./keys/key-rotation";
+import { PushSettings } from "./schedule/push-settings";
 import { SyncSchedule } from "./schedule/sync-schedule";
 
 interface SyncScheduleStatus {
@@ -44,7 +45,7 @@ export default async function DashboardPage() {
   const federationManager = can(session, "federation.manage");
   const alertRecipient = can(session, "federation.notifications");
   const [{ data: node }, { data: keys }, schedule, alerts] = await Promise.all([
-    supabase.from("node_settings").select("node_uuid, identity_domain, identity_mode, setup_completed_at").maybeSingle(),
+    supabase.from("node_settings").select("node_uuid, identity_domain, identity_mode, setup_completed_at, push_enabled").maybeSingle(),
     supabase.from("federation_keys").select("key_id, status, created_at, overlap_ends_at, rotation_note").order("id", { ascending: false }),
     // The function refuses anyone else, so only a federation manager asks.
     federationManager ? supabase.rpc("sync_schedule_status").maybeSingle<SyncScheduleStatus>() : null,
@@ -151,6 +152,21 @@ export default async function DashboardPage() {
                   </p>
                 )}
                 <SyncSchedule registered={syncStatus !== null} />
+              </CardContent>
+            </Card>
+          )}
+
+          {federationManager && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Push subscriptions</CardTitle>
+                <CardDescription>
+                  Optional (API-10): partners that subscribe are sent each change as it happens, signed like any federation request, and still poll as
+                  a reconciliation. Which partners are subscribed is shown on each partner&apos;s page.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PushSettings enabled={node?.push_enabled === true} />
               </CardContent>
             </Card>
           )}

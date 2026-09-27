@@ -133,6 +133,23 @@ export class SyncEngine {
     return DEFAULT_PAGE_SIZE;
   }
 
+  /**
+   * A pushed listing or tombstone (API-11), applied exactly like a polled
+   * one. A delivery is a repeat when the copy already holds that state: the
+   * same `updated_at` *and* the same tombstone status. Not a log of pairs
+   * received — a re-shared listing comes back with the `updated_at` it had
+   * before its tombstone, and a receipt log would drop it and keep the
+   * withdrawal.
+   */
+  async applyDelivery(partner: Partner, item: FeedItem): Promise<"created" | "updated" | "tombstoned" | "unchanged" | "duplicate"> {
+    const held = await this.options.copies.find(item.canonicalUri);
+    const ended = item.kind === "tombstone" || isTerminalStatus(item.status);
+    if (held !== null && held.partnerId === partner.id && held.updatedAt === item.updatedAt && (held.tombstonedAt !== null) === ended) {
+      return "duplicate";
+    }
+    return this.apply(partner, item);
+  }
+
   private async apply(partner: Partner, item: FeedItem): Promise<"created" | "updated" | "tombstoned" | "unchanged"> {
     const existing = await this.options.copies.find(item.canonicalUri);
     // A copy belongs to the partner it first came from. parseFeedPage already

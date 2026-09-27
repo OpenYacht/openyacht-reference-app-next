@@ -133,6 +133,13 @@ A super admin adds a partner under **Partners** with nothing but its identity do
 verified TLS, trusts it on first use, and sends a signed partnership request carrying your message — so the other administrator learns who is
 asking before approving. Until they approve, their node answers `PARTNER_PROVISIONAL`; that is not an error, and polling simply continues.
 
+**Push subscriptions** are optional, both ways (API-10, API-11). On a partner's page this node can ask a partner that offers them to push
+its changes here; they arrive at `/openyacht/v1/inbox`, are applied exactly like a polled item, and a repeat of the state already held
+changes nothing. Such a partner is still polled once a day, since a push can be missed. Offering pushes to partners is a switch on the
+dashboard, off by default: it adds a job that runs every minute and makes a request only when a delivery is due. Deliveries take their
+content from the feed's own decision at the moment they are sent, are signed like any federation request, and retry with backoff for 24
+hours.
+
 **The node directory** (Partners → Node directory) shows the vendored copy of the project's advisory list of nodes that asked to be
 listed, with a link to add any of them. A listing verifies nothing and is not needed to federate. The same page signs the two-line request
 that lists, amends or delists this node, with this node's signing key.

@@ -68,6 +68,7 @@ export class MemoryPartners implements PartnerRepository {
       ...input,
       id: `partner-${this.rows.size + 1}`,
       groupAcceptancePolicies: [],
+      pushSubscribedAt: null,
       importTypes: "both",
       keysFetchedAt: NOW,
       syncWatermark: null,
@@ -92,6 +93,9 @@ export class MemoryPartners implements PartnerRepository {
   }
   async setTrustLevel(id: string, trustLevel: Partner["trustLevel"]) {
     this.patch(id, { trustLevel });
+  }
+  async setPushSubscribed(id: string, pushSubscribedAt: Date | null) {
+    this.patch(id, { pushSubscribedAt });
   }
   endedPartnerships: string[] = [];
   async endPartnership(id: string) {
