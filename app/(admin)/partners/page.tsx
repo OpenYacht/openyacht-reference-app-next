@@ -10,8 +10,10 @@ export const dynamic = "force-dynamic";
 
 const TRUST_COLOR = { verified: "success", provisional: "warning", blocked: "danger" } as const;
 
-export default async function PartnersPage() {
+export default async function PartnersPage({ searchParams }: PageProps<"/partners">) {
   const session = await requirePermission("federation.manage");
+  // Arriving from the node directory with a domain to add.
+  const { add } = await searchParams;
   const partners = await new SupabasePartnerRepository(await userClient()).list();
   const now = new Date();
 
@@ -23,6 +25,10 @@ export default async function PartnersPage() {
           Nodes this one exchanges listings with. Trust is pairwise, and a person approves each partnership.{" "}
           <Link href="/partners/groups" className="underline underline-offset-4">
             Partner groups
+          </Link>{" "}
+          ·{" "}
+          <Link href="/partners/directory" className="underline underline-offset-4">
+            Node directory
           </Link>
         </p>
       </header>
@@ -79,7 +85,11 @@ export default async function PartnersPage() {
           <CardDescription>You need only their identity domain. Everything else is read from the node itself.</CardDescription>
         </CardHeader>
         <CardContent>
-          <AddPartnerForm nodeName={parseNodeIdentity(process.env).name} contactEmail={session.email ?? ""} />
+          <AddPartnerForm
+            nodeName={parseNodeIdentity(process.env).name}
+            contactEmail={session.email ?? ""}
+            domain={typeof add === "string" ? add : ""}
+          />
         </CardContent>
       </Card>
     </main>

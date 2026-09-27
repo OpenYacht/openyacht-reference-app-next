@@ -7,8 +7,10 @@ import {
   PartnerService,
   SignedClient,
   Signer,
+  signListingRequest,
   SyncEngine,
   WellKnownClient,
+  type ListingAction,
   type Partner,
   type PartnerRepository,
   type SyncOutcome,
@@ -38,6 +40,22 @@ async function currentSigner(): Promise<Signer> {
 }
 
 const signedClient = new SignedClient(currentSigner, http);
+
+/**
+ * The two lines that ask the node directory to list, delist or amend this
+ * node, signed with the current signing key (federation-protocol.md §The
+ * listing token). The seed is read from Vault for this signature only.
+ */
+export async function signDirectoryRequest(action: ListingAction): Promise<{ token: string; signature: string }> {
+  const { data, error } = await serviceClient().rpc("active_signing_key").single<{ key_id: string; private_key: string }>();
+  if (error || data === null) throw new Error(`No active signing key is available: ${error?.message ?? "none stored"}`);
+  const seed = Buffer.from(data.private_key, "base64");
+  try {
+    return signListingRequest(parseNodeIdentity(process.env).domain, action, new Date(), seed);
+  } finally {
+    seed.fill(0);
+  }
+}
 
 /** Partner operations over the given repository — pass one built on the acting user's client. */
 export function partnerService(partners: PartnerRepository): PartnerService {

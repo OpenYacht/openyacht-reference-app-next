@@ -16,10 +16,10 @@ import { ActionForm, SubmitButton } from "@/components/action-form";
 import { PolicyOptions } from "@/components/policy-options";
 import { addPartnerAction } from "./actions";
 
-export function AddPartnerForm({ nodeName, contactEmail }: { nodeName: string; contactEmail: string }) {
+export function AddPartnerForm({ nodeName, contactEmail, domain }: { nodeName: string; contactEmail: string; domain: string }) {
   return (
     <ActionForm action={addPartnerAction} className="flex flex-col gap-5">
-      <TextField name="domain" isRequired autoComplete="off">
+      <TextField name="domain" isRequired autoComplete="off" defaultValue={domain}>
         <Label>Partner&apos;s identity domain</Label>
         <Input placeholder="openyacht.their-brokerage.example" />
         <Description>A bare hostname. Its discovery document is fetched over verified TLS and trusted on first use.</Description>

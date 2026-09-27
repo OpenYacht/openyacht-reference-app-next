@@ -4,6 +4,7 @@
 // client. Storage, outbound HTTP and time arrive through the interfaces in
 // ./ports, so the directory lifts unchanged into any Node server.
 export * from "./copies";
+export * from "./directory";
 export * from "./documents";
 export * from "./errors";
 export * from "./feed";

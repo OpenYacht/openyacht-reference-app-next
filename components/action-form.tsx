@@ -8,6 +8,8 @@ export interface ActionState {
   message: string | null;
   /** A one-time link to hand to someone, shown beneath the message for copying. */
   link?: string;
+  /** Lines to copy exactly, shown beneath the message as preformatted text. */
+  code?: string;
 }
 
 type Action = (previous: ActionState, form: FormData) => Promise<ActionState>;
@@ -55,6 +57,7 @@ export function ActionForm({
             <AlertContent>
               <AlertDescription>{state.message}</AlertDescription>
               {state.link !== undefined && <code className="mt-2 block text-xs break-all select-all">{state.link}</code>}
+              {state.code !== undefined && <pre className="mt-2 text-xs break-all whitespace-pre-wrap select-all">{state.code}</pre>}
             </AlertContent>
           </Alert>
         )}

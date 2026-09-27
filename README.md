@@ -133,6 +133,10 @@ A super admin adds a partner under **Partners** with nothing but its identity do
 verified TLS, trusts it on first use, and sends a signed partnership request carrying your message — so the other administrator learns who is
 asking before approving. Until they approve, their node answers `PARTNER_PROVISIONAL`; that is not an error, and polling simply continues.
 
+**The node directory** (Partners → Node directory) shows the vendored copy of the project's advisory list of nodes that asked to be
+listed, with a link to add any of them. A listing verifies nothing and is not needed to federate. The same page signs the two-line request
+that lists, amends or delists this node, with this node's signing key.
+
 When an unknown node makes contact, or a partner's domain starts answering with a different node UUID (a different installation may now be
 behind it), the partner is left provisional and an alert waits on the dashboard of everyone holding `federation.notifications` until one of
 them dismisses it. The node sends no email.
