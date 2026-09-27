@@ -172,3 +172,25 @@ describe("switching pushes on and off", () => {
     expect((await client.query("select push_enabled from public.node_settings")).rows[0].push_enabled).toBe(false);
   });
 });
+
+describe("API-11 recording a subscription", () => {
+  const ADMIN = "00000000-0000-4000-8000-000000000f21";
+
+  it("is written as the signed-in federation manager: the column is granted and RLS decides", async () => {
+    await client.query("set local session_replication_role = replica");
+    await client.query("delete from public.user_roles");
+    await client.query("set local session_replication_role = origin");
+    await client.query("insert into auth.users (id, email) values ($1, 'push-admin@node.example')", [ADMIN]);
+    await client.query("insert into public.user_roles (user_id, role) values ($1, 'super_admin')", [ADMIN]);
+    await client.query("savepoint as_user");
+    await client.query("set local role authenticated");
+    await client.query("select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true)", [
+      JSON.stringify({ sub: ADMIN, role: "authenticated" }),
+      ADMIN,
+    ]);
+    const { rowCount } = await client.query("update public.federation_partners set push_subscribed_at = now() where id = $1", [polling]);
+    await client.query("reset role");
+    await client.query("release savepoint as_user");
+    expect(rowCount).toBe(1);
+  });
+});
