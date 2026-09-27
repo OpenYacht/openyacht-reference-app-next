@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/auth/session";
 import { SupabasePartnerRepository } from "@/lib/federation/repositories";
 import { userClient } from "@/lib/supabase/server";
 import { FieldGroupsForm, Introduce, PolicyForm, RateLimitForm, RefreshKeys, SyncNow, TrustAndRemoval } from "./partner-actions";
+import { DirectSharesForm, SharingScopeForm, type PickerListing } from "./partner-sharing";
 import { DEFAULT_RATE_PER_HOUR } from "@/lib/federation/handlers";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +24,47 @@ export default async function PartnerPage({ params }: PageProps<"/partners/[id]"
   // What the partner said when it introduced itself, if it did.
   const { data: received } = await supabase
     .from("federation_partners")
-    .select("request_message, request_contact_email, requested_at, first_contact_at, field_groups, rate_per_hour")
+    .select("request_message, request_contact_email, requested_at, first_contact_at, field_groups, rate_per_hour, sharing_scope")
     .eq("id", partner.id)
     .maybeSingle();
+
+  // What this partner is sent: the listings that have not ended, what is
+  // shared with it directly, and what reaches it through its groups.
+  const [{ data: ownListings }, { data: directRows }, { data: memberships }] = await Promise.all([
+    supabase
+      .from("listings")
+      .select("id, name, listing_type, status, audience, vessel_id")
+      .in("status", ["draft", "active", "under_offer"])
+      .order("name"),
+    supabase.from("listing_shares").select("listing_id").eq("partner_id", partner.id),
+    supabase.from("partner_group_members").select("group_id, partner_groups(name)").eq("partner_id", partner.id),
+  ]);
+  const groupNames = new Map((memberships ?? []).map((m) => [m.group_id as number, (m.partner_groups as unknown as { name: string }).name]));
+  const { data: groupShareRows } =
+    groupNames.size === 0
+      ? { data: [] }
+      : await supabase
+          .from("listing_group_shares")
+          .select("listing_id, group_id")
+          .in("group_id", [...groupNames.keys()]);
+  const direct = new Set((directRows ?? []).map((row) => row.listing_id as number));
+  const viaGroups = (listingId: number) =>
+    (groupShareRows ?? []).filter((row) => row.listing_id === listingId).map((row) => groupNames.get(row.group_id as number) ?? "");
+  const shared = (listingId: number) => direct.has(listingId) || viaGroups(listingId).length > 0;
+  const picker = (type: "sale" | "charter"): PickerListing[] =>
+    (ownListings ?? [])
+      .filter((listing) => listing.listing_type === type)
+      .map((listing) => ({
+        id: listing.id,
+        name: listing.name,
+        status: listing.status,
+        audience: listing.audience,
+        direct: direct.has(listing.id),
+        viaGroups: viaGroups(listing.id),
+        twinShared:
+          !shared(listing.id) &&
+          (ownListings ?? []).some((twin) => twin.vessel_id === listing.vessel_id && twin.listing_type !== type && shared(twin.id)),
+      }));
 
   const copies = await partners.countCopies(partner.id);
   const freshness = partnerFreshness(partner, new Date());
@@ -127,10 +166,30 @@ export default async function PartnerPage({ params }: PageProps<"/partners/[id]"
 
       <Card>
         <CardHeader>
+          <CardTitle>Which of your listings they receive</CardTitle>
+          <CardDescription>
+            Shares here are the same as the partner ticks on each listing. Group memberships are set under{" "}
+            <Link href="/partners/groups" className="underline underline-offset-4">
+              Partner groups
+            </Link>
+            .
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <SharingScopeForm partnerId={partner.id} scope={(received?.sharing_scope as string | undefined) ?? "standard"} />
+          <div className="grid gap-6 md:grid-cols-2">
+            <DirectSharesForm partnerId={partner.id} type="sale" listings={picker("sale")} />
+            <DirectSharesForm partnerId={partner.id} type="charter" listings={picker("charter")} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>What they see of your listings</CardTitle>
           <CardDescription>
             Anything not granted is withheld on this node before a listing is sent — they are never sent a value and asked to ignore it. Which
-            listings they receive is set on each listing.
+            listings they receive is set above and on each listing.
           </CardDescription>
         </CardHeader>
         <CardContent>

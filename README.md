@@ -169,7 +169,11 @@ Listings are created under **Listings**. A listing's UUID is minted at creation 
 changes; a draft is served to nobody. From active it moves to under offer, sold or withdrawn, and the last two are final: partners are sent a
 tombstone and remove their copies.
 
-- **Sharing** is per listing: every verified partner, selected partners, or nobody. Taking a listing away from a partner sends that partner a
+- **Sharing** is per listing: every verified partner, selected partners, or nobody, with partners chosen one by one or through **partner
+  groups**. A partner's **sharing scope** is standard (everything shared with everyone, plus what is shared with it) or curated (a show
+  organiser, a trial, a press feed: only what is shared with it). Shares add up, the same rule every OpenYacht implementation follows:
+  _visible ⇔ audience ≠ nobody and (shared with the partner or one of its groups, or audience = everyone and its scope is standard)_. A
+  partner's own page has a picker per listing type. Taking a listing away from a partner, by any of these routes, sends that partner a
   withdrawal and tells nobody else anything.
 - **Field groups** are per partner: pricing, exact location, original media, documents, vessel identifiers, price history. What is not granted
   is withheld here, before a listing is sent. Changing a partner's grants re-sends it the listings it can see, in the new form.

@@ -123,12 +123,13 @@ export async function setSharingAction(_previous: ActionState, form: FormData): 
   const audience = String(form.get("audience"));
   if (!["everyone", "selected", "none"].includes(audience)) return failed("Choose who this listing is shared with.");
   const partnerIds = form.getAll("partner_ids").map(Number).filter(Number.isInteger);
+  const groupIds = form.getAll("group_ids").map(Number).filter(Number.isInteger);
 
   // One database function changes the sharing and records what changed, in
   // that order, so that no partner misses a removal (API-3).
   const { data, error } = await (
     await userClient()
-  ).rpc("set_listing_sharing", { p_listing_id: id, p_audience: audience, p_partner_ids: partnerIds });
+  ).rpc("set_listing_sharing", { p_listing_id: id, p_audience: audience, p_partner_ids: partnerIds, p_group_ids: groupIds });
   if (error) return failed(error.message);
   revalidatePath(`/listings/${id}`);
   return {

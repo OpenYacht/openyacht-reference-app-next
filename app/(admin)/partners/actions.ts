@@ -241,3 +241,72 @@ export async function setRateLimitAction(_previous: ActionState, form: FormData)
     return explain(error);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Which listings a partner receives: its sharing scope, what is shared with it
+// directly, and partner groups. Each goes through one database function that
+// makes the change and records every (listing, partner) visibility it moved.
+// ---------------------------------------------------------------------------
+
+const viewsChanged = (count: number) =>
+  count === 0
+    ? "No listing's visibility changed."
+    : `${count} listing${count === 1 ? "'s visibility" : "s' visibility"} changed; the partner is told on its next poll.`;
+
+export async function setSharingScopeAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  try {
+    const { partners } = await context();
+    const partner = await loadPartner(partners, form);
+    const scope = form.get("sharing_scope") === "curated" ? "curated" : "standard";
+    const { data, error } = await (await userClient()).rpc("set_partner_sharing_scope", { p_partner_id: Number(partner.id), p_scope: scope });
+    if (error) return { ok: false, message: error.message };
+    revalidatePath(`/partners/${partner.id}`);
+    return { ok: true, message: `Saved. ${viewsChanged(data as number)}` };
+  } catch (error) {
+    return explain(error);
+  }
+}
+
+export async function setDirectSharesAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  try {
+    const { partners } = await context();
+    const partner = await loadPartner(partners, form);
+    const type = form.get("listing_type") === "charter" ? "charter" : "sale";
+    const ids = form.getAll("listing_ids").map(Number).filter(Number.isInteger);
+    // Scoped to one type in the database, so this form cannot unshare the other type's listings.
+    const { data, error } = await (
+      await userClient()
+    ).rpc("set_partner_direct_shares", {
+      p_partner_id: Number(partner.id),
+      p_listing_type: type,
+      p_listing_ids: ids,
+    });
+    if (error) return { ok: false, message: error.message };
+    revalidatePath(`/partners/${partner.id}`);
+    return { ok: true, message: `Saved. ${viewsChanged(data as number)}` };
+  } catch (error) {
+    return explain(error);
+  }
+}
+
+export async function saveGroupAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  await context();
+  const groupId = form.get("group_id") ? Number(form.get("group_id")) : null;
+  const name = String(form.get("name") ?? "").trim();
+  if (name === "") return { ok: false, message: "A group needs a name." };
+  const members = form.getAll("member_ids").map(Number).filter(Number.isInteger);
+  const { error } = await (await userClient()).rpc("save_partner_group", { p_group_id: groupId, p_name: name, p_member_ids: members });
+  if (error) return { ok: false, message: error.message.includes("duplicate key") ? "There is already a group with that name." : error.message };
+  revalidatePath("/partners/groups");
+  return { ok: true, message: groupId === null ? `Group "${name}" created.` : "Saved." };
+}
+
+export async function deleteGroupAction(_previous: ActionState, form: FormData): Promise<ActionState> {
+  await context();
+  if (form.get("confirmed") !== "yes") return { ok: false, message: "Confirm that the group is to be deleted." };
+  const { error } = await (await userClient()).rpc("delete_partner_group", { p_group_id: Number(form.get("group_id")) });
+  if (error) return { ok: false, message: error.message };
+  // The form lived in the deleted group's card; the page reports instead.
+  revalidatePath("/partners/groups");
+  redirect("/partners/groups?deleted=1");
+}

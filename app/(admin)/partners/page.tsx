@@ -19,7 +19,12 @@ export default async function PartnersPage() {
     <main className="flex flex-col gap-8">
       <header>
         <h1 className="text-2xl font-semibold">Partners</h1>
-        <p className="text-muted mt-1 text-sm">Nodes this one exchanges listings with. Trust is pairwise, and a person approves each partnership.</p>
+        <p className="text-muted mt-1 text-sm">
+          Nodes this one exchanges listings with. Trust is pairwise, and a person approves each partnership.{" "}
+          <Link href="/partners/groups" className="underline underline-offset-4">
+            Partner groups
+          </Link>
+        </p>
       </header>
 
       {partners.length === 0 ? (

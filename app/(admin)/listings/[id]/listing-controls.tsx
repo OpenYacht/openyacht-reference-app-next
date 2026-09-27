@@ -68,8 +68,12 @@ export function StatusControls({ listingId, status, canDelete }: { listingId: nu
 }
 
 const AUDIENCES = [
-  ["everyone", "Every verified partner", "Including partners approved later."],
-  ["selected", "Selected partners only", "Those ticked below."],
+  [
+    "everyone",
+    "Every verified partner",
+    "Including partners approved later. Curated partners receive it only if they or a group of theirs is ticked below.",
+  ],
+  ["selected", "Selected partners only", "Those ticked below, and the members of the groups ticked below."],
   ["none", "Nobody", "Hidden from every partner. Your selection below is kept for when you share it again."],
 ] as const;
 
@@ -78,11 +82,15 @@ export function SharingForm({
   audience,
   shared,
   partners,
+  groups,
+  sharedGroups,
 }: {
   listingId: number;
   audience: string;
   shared: number[];
   partners: { id: number; node_name: string; domain: string }[];
+  groups: { id: number; name: string }[];
+  sharedGroups: number[];
 }) {
   return (
     <ActionForm action={setSharingAction}>
@@ -114,6 +122,21 @@ export function SharingForm({
                 <Label>
                   {partner.node_name} <span className="text-muted font-mono text-xs">{partner.domain}</span>
                 </Label>
+              </CheckboxContent>
+            </Checkbox>
+          ))}
+        </div>
+      )}
+      {groups.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <Label>Groups</Label>
+          {groups.map((group) => (
+            <Checkbox key={group.id} name="group_ids" value={String(group.id)} defaultSelected={sharedGroups.includes(group.id)}>
+              <CheckboxContent>
+                <CheckboxControl>
+                  <CheckboxIndicator />
+                </CheckboxControl>
+                <Label>{group.name}</Label>
               </CheckboxContent>
             </Checkbox>
           ))}

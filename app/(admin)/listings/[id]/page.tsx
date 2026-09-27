@@ -56,11 +56,11 @@ export default async function ListingPage({ params }: PageProps<"/listings/[id]"
   // As the signed-in user: a broker who asks for someone else's listing gets nothing back.
   const { data: listing } = await supabase
     .from("listings")
-    .select("*, vessels(*), price_history(id, amount, currency, changed_at), listing_shares(partner_id)")
+    .select("*, vessels(*), price_history(id, amount, currency, changed_at), listing_shares(partner_id), listing_group_shares(group_id)")
     .eq("id", id)
     .maybeSingle();
   if (listing === null) notFound();
-  const { data: partners } = await supabase.rpc("shareable_partners");
+  const [{ data: partners }, { data: groups }] = await Promise.all([supabase.rpc("shareable_partners"), supabase.rpc("shareable_groups")]);
 
   const vessel = record(listing.vessels);
   const specifications = record(listing.specifications);
@@ -124,6 +124,8 @@ export default async function ListingPage({ params }: PageProps<"/listings/[id]"
               listingId={listing.id}
               audience={listing.audience}
               shared={(listing.listing_shares as { partner_id: number }[]).map((share) => share.partner_id)}
+              groups={groups ?? []}
+              sharedGroups={(listing.listing_group_shares as { group_id: number }[]).map((share) => share.group_id)}
               partners={(partners ?? []) as { id: number; node_name: string; domain: string }[]}
             />
           </CardContent>
