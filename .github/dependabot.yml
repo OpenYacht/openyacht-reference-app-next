@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # "Latest stable everything" is the rule here: drift is resolved upward,
+  # never worked around. Minor and patch bumps arrive grouped so one PR carries
+  # the routine churn; majors come on their own because they need reading (the
+  # two deliberate holds, TypeScript 6.x and ESLint 9.x, are explained in
+  # CLAUDE.md). The npm ecosystem covers the pnpm lockfile.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    groups:
+      js-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
