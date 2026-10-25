@@ -1,8 +1,8 @@
 {
   "repository": "https://github.com/OpenYacht/protocol",
-  "commit": "734822cceeb1f603451f5c6d8dfb0c1ead23b882",
+  "commit": "6cf6fac17983e683f5c087b003d54795311ad696",
   "registry_versions": {
-    "builders.json": "2026.09.0",
+    "builders.json": "2026.10.1",
     "categories.json": "2026.08.0",
     "destinations.json": "2026.08.0",
     "features.json": "2026.08.0",

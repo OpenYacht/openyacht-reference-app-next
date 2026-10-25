@@ -4,6 +4,8 @@
 
 **Format**: `{ "slug", "name", "country" }` per builder. `slug` is permanent once published — renames are done by changing `name`, never `slug`. The registry is deliberately **alias-free**: it is the fixed validation list both sides of a federation exchange check builder slugs against. Alias/variation mappings for normalising dirty *feed* data are an import concern, not registry data: each implementer maintains its own for the sources it reads.
 
+> *Amended 2026-10: 22 entries that did not identify a single real builder (ambiguous one-word names, model and brand names, feed artefacts) were removed in 2026.10.0, before any node outside the maintainer's own was federating. The permanence rule holds for every entry from 2026.10.0 onward; a consumer holding a copy older than that treats an unknown slug exactly as [`../spec/listing-schema.md`](../spec/listing-schema.md) already says — fall back to the name, never reject. One of the 22, `blackwater`, was restored under the same slug in 2026.10.1: it is BlackWater Boats, a Miami sportfish and center-console builder, wrongly judged unidentifiable.*
+
 **Versioning**: date-based (`2026.08.0`), tzdata-style, bumped on every published change. Canonical publication URLs: `https://openyacht.org/registry/{builders,categories,destinations}.json`. Nodes vendor a copy; a registry is never fetched at request time.
 
 **Governance**: pull requests to this repository.
@@ -25,7 +27,7 @@ The canonical `name` is **the name a buyer would search**. The rules:
 
 - The builder list covers the great majority of active on-market inventory by name, not every builder that has ever existed. A long tail of one-off and historic yards is deliberately left for case-by-case curation: an entry earns its place when a real listing needs it.
 - Standing curation queue for missing registry entries: the broker-typed brand strings that accumulate in import sources, and — cleaner — the distinct values of a source's constrained field. Generic placeholders (`Custom`, `Custom Built`, `Other`, `Unknown`) are never registry entries.
-- `country` is `null` where not yet curated; filling these is welcome PR material.
+- `country` is one free-text country name per entry: **the country of the brand's principal office**, the same convention the node directory uses for its `country` field. Production country goes nowhere — a brand marketed from one country and built in another gets the office country; where the hull was laid is a fact about a boat, not about a vocabulary entry. (Moving to ISO alpha-2 codes is a separate change.) `null` where not yet curated; filling these is welcome PR material.
 - **Destinations** carry `{ "slug", "name", "parent" }` and form a hierarchy; `parent` is another entry's slug or `null` for a top-level region. Names are unique across the whole list at every level, because consumers fall back to the name when a slug is unknown. Groupings follow charter-industry convention rather than strict geography — the test for a new entry is whether brokers actually market that cruising ground as a unit, not whether an atlas draws the line there. Adding a sub-area is cheap; renaming or re-parenting a published one is not, since slugs are permanent.
 
 ## The features list (`features.json`) — non-normative

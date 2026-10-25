@@ -6,10 +6,11 @@
 // host, openyacht.org included). Re-run this when the protocol repo changes:
 //
 //   pnpm vendor:protocol                     # from github.com/OpenYacht/protocol
-//   pnpm vendor:protocol -- --from ../openyacht-protocol   # from a local checkout
+//   node scripts/vendor-protocol.mjs --from ../openyacht-protocol && pnpm generate:types
 //
 // A local checkout is copied as it stands on disk, so check what it has
-// checked out before vendoring from it.
+// checked out before vendoring from it. (Arguments passed through pnpm with
+// `--` land on the last command of the script, not on this one.)
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";

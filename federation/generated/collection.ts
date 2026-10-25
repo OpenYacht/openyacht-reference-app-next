@@ -1,5 +1,5 @@
 // GENERATED FILE — do not edit. Run `pnpm generate:types`.
-// Source: protocol/schemas/v1 (https://github.com/OpenYacht/protocol @ 734822c)
+// Source: protocol/schemas/v1 (https://github.com/OpenYacht/protocol @ 6cf6fac)
 // Private `x_` extension fields are valid on the wire but deliberately untyped.
 import type {OpenYachtListing} from "./listing";
 import type {OpenYachtTombstone} from "./tombstone";
