@@ -4,6 +4,7 @@
 import pg from "pg";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { pgConfig } from "../../scripts/lib/pg-config.mjs";
+import { micros } from "./micros";
 
 const config = pgConfig(process.env, process.cwd());
 if (config === null) throw new Error("The database lane needs POSTGRES_URL_NON_POOLING or DATABASE_URL.");
@@ -147,9 +148,10 @@ describe("changing the media block", () => {
   });
 
   it("every change moves the wire updated_at, so partners receive it", async () => {
-    const before = (await media()).federation_updated_at as Date;
+    const stamp = () => micros(client, "select federation_updated_at from public.listings where id = $1", [listing.id]);
+    const before = await stamp();
     await asUser(BROKER, "select public.describe_listing_media($1, 'gallery', 'a', 'Bow', null)", [listing.id]);
-    expect(((await media()).federation_updated_at as Date).getTime()).toBeGreaterThan(before.getTime());
+    expect(await stamp()).toBeGreaterThan(before);
   });
 
   it("refuses an unknown collection", async () => {

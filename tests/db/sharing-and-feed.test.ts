@@ -4,6 +4,7 @@
 import pg from "pg";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { pgConfig } from "../../scripts/lib/pg-config.mjs";
+import { micros } from "./micros";
 
 const config = pgConfig(process.env, process.cwd());
 if (config === null) throw new Error("The database lane needs POSTGRES_URL_NON_POOLING or DATABASE_URL.");
@@ -150,11 +151,14 @@ describe("API-3 a polling partner never misses a removal", () => {
 
   it("an unshared listing is a tombstone stamped at the moment of unsharing, and reads as `withdrawn`", async () => {
     const listing = await createListing();
+    const updatedAt = await micros(client, "select federation_updated_at from public.listings where id = $1", [listing.id]);
     const before = (await feed(alpha))[0]!;
     await share(listing.id, "none");
     const [row] = await feed(alpha);
     expect(row).toMatchObject({ kind: "tombstone", tombstone_status: "withdrawn" });
-    expect(row!.tombstone_at!.getTime()).toBeGreaterThan(listing.federation_updated_at.getTime());
+    expect(
+      await micros(client, "select tombstone_at from public.feed_for_partner($1, null, null, null, 100) where listing_id = $2", [alpha, listing.id]),
+    ).toBeGreaterThan(updatedAt);
     expect(row!.effective_at > before.effective_at).toBe(true);
   });
 

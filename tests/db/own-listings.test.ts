@@ -4,6 +4,7 @@
 import pg from "pg";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { pgConfig } from "../../scripts/lib/pg-config.mjs";
+import { micros } from "./micros";
 
 const config = pgConfig(process.env, process.cwd());
 if (config === null) throw new Error("The database lane needs POSTGRES_URL_NON_POOLING or DATABASE_URL.");
@@ -67,6 +68,7 @@ async function createListing(values: Record<string, unknown> = {}): Promise<Stor
 }
 
 const reload = async (id: string) => (await client.query<StoredListing>("select * from public.listings where id = $1", [id])).rows[0]!;
+const wireStamp = (id: string) => micros(client, "select federation_updated_at from public.listings where id = $1", [id]);
 
 async function attempt(query: string, values: unknown[] = []): Promise<string | null> {
   await client.query("savepoint attempt");
@@ -160,27 +162,31 @@ describe("ID-8 lifecycle", () => {
 describe("API-4 the wire timestamp reflects every change a partner can see", () => {
   it("moves when a listing field changes", async () => {
     const listing = await createListing({ status: "active" });
+    const before = await wireStamp(listing.id);
     await client.query("update public.listings set name = 'RENAMED' where id = $1", [listing.id]);
-    expect((await reload(listing.id)).federation_updated_at.getTime()).toBeGreaterThan(listing.federation_updated_at.getTime());
+    expect(await wireStamp(listing.id)).toBeGreaterThan(before);
   });
 
   it("moves when a stored block changes", async () => {
     const listing = await createListing({ status: "active" });
+    const before = await wireStamp(listing.id);
     await client.query(`update public.listings set features = '[{"name": "Seabob", "quantity": 2}]' where id = $1`, [listing.id]);
-    expect((await reload(listing.id)).federation_updated_at.getTime()).toBeGreaterThan(listing.federation_updated_at.getTime());
+    expect(await wireStamp(listing.id)).toBeGreaterThan(before);
   });
 
   it("moves when the vessel changes — the vessel block is on the wire", async () => {
     const listing = await createListing({ status: "active" });
+    const before = await wireStamp(listing.id);
     await client.query("update public.vessels set hin = 'OEOM5021G516' where id = $1", [vesselId]);
-    expect((await reload(listing.id)).federation_updated_at.getTime()).toBeGreaterThan(listing.federation_updated_at.getTime());
+    expect(await wireStamp(listing.id)).toBeGreaterThan(before);
   });
 
   it("does not move for a save that changes nothing, or for a reassignment — neither is visible to a partner", async () => {
     const listing = await createListing({ status: "active" });
+    const before = await wireStamp(listing.id);
     await client.query("update public.listings set name = name where id = $1", [listing.id]);
     await client.query("update public.listings set assigned_broker_id = $2 where id = $1", [listing.id, BROKER]);
-    expect((await reload(listing.id)).federation_updated_at).toEqual(listing.federation_updated_at);
+    expect(await wireStamp(listing.id)).toBe(before);
   });
 });
 

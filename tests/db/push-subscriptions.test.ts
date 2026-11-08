@@ -4,6 +4,7 @@
 import pg from "pg";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { pgConfig } from "../../scripts/lib/pg-config.mjs";
+import { micros } from "./micros";
 
 const config = pgConfig(process.env, process.cwd());
 if (config === null) throw new Error("The database lane needs POSTGRES_URL_NON_POOLING or DATABASE_URL.");
@@ -63,12 +64,14 @@ describe("API-10 fan-out", () => {
   it("folds a burst of edits into the waiting delivery without moving its retry slot", async () => {
     const id = await listing();
     await share(id);
+    const changedAt = () => micros(client, "select changed_at from public.push_deliveries where listing_id = $1", [id]);
     const [before] = await queue();
+    const changedBefore = await changedAt();
     await client.query("update public.listings set name = 'RENAMED' where id = $1", [id]);
     await client.query("update public.listings set summary = 'Changed twice' where id = $1", [id]);
     const after = await queue();
     expect(after).toHaveLength(1);
-    expect(after[0].changed_at.getTime()).toBeGreaterThan(before.changed_at.getTime());
+    expect(await changedAt()).toBeGreaterThan(changedBefore);
     expect(after[0].next_attempt_at).toEqual(before.next_attempt_at);
   });
 
