@@ -268,7 +268,7 @@ Also: `pnpm lint`, `pnpm typecheck`, `pnpm format:check`, `pnpm build`.
 - **The private key is encrypted at rest** in Supabase Vault. `federation_keys` holds only the secret's id; the single function that
   decrypts it is executable by the service role alone.
 - **Migrations apply themselves at build** when a database URL is present (`pnpm build` runs `pnpm migrate` first), which is what lets a
-  hosted deploy install itself. `supabase db push` works over the same files and the same ledger, if you prefer the CLI.
+  hosted deploy install itself. `supabase db push --remote` works over the same files and the same ledger, if you prefer the CLI.
 - **Roles**: `super_admin`, `admin`, `editor`, `broker`, `viewer`, seeded by the first migration; see [Users and roles](#users-and-roles).
 - **Accounts** are created and deleted through the Auth admin API, the one use of the service role in the admin UI (`lib/auth/accounts.ts`),
   and only after the database, asked as the signed-in user, has agreed.
