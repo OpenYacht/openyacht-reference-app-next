@@ -27,3 +27,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # @types/node tracks the Node major the project runs on (node-version in
+    # the CI workflow), not the newest published. Lift this when Node moves.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
