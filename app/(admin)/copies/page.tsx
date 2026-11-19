@@ -2,9 +2,11 @@ import { Chip } from "@heroui/react";
 import Link from "next/link";
 import { partnerFreshness } from "@/federation";
 import { IndexFilters, IndexPagination, IndexTabs, STATUS_LABEL } from "@/components/listing-index";
+import { PartnerThumbnail } from "@/components/partner-thumbnail";
 import { requireSession } from "@/lib/auth/session";
 import { toCopy } from "@/lib/federation/repositories";
 import { containsPattern, pageRange, parseIndexQuery, PARTNER_LISTING_VIEWS, statusesOf } from "@/lib/listings/index-query";
+import { profileThumbnail } from "@/lib/listings/wire-thumbnails";
 import { serviceClient } from "@/lib/supabase/service";
 import { userClient } from "@/lib/supabase/server";
 
@@ -128,23 +130,33 @@ export default async function CopiesPage({ searchParams }: PageProps<"/copies">)
                 const listing = record(copy.payload?.listing);
                 const vessel = record(copy.payload?.vessel);
                 const ended = copy.tombstonedAt !== null;
+                const thumbnail = profileThumbnail(copy.payload);
                 return (
                   <tr key={copy.canonicalUri} className="border-border border-b align-top">
                     <td className="py-3 pr-4">
-                      {ended ? (
-                        <span className="text-muted">Ended listing</span>
-                      ) : (
-                        <Link
-                          href={`/copies/${Buffer.from(copy.canonicalUri).toString("base64url")}`}
-                          className="font-medium underline-offset-4 hover:underline"
-                        >
-                          {text(listing.name) ?? "Unnamed"}
-                        </Link>
-                      )}
-                      <div className="text-muted text-xs">
-                        {[copy.type, text(record(vessel.builder).name), text(record(vessel.model).name), vessel.year_built]
-                          .filter(Boolean)
-                          .join(" · ")}
+                      <div className="flex items-start gap-3">
+                        {!past && (
+                          <div className="bg-surface-secondary h-12 w-16 shrink-0 overflow-hidden rounded-md">
+                            {thumbnail !== null && <PartnerThumbnail thumbnail={thumbnail} alt="" className="h-full w-full" />}
+                          </div>
+                        )}
+                        <div>
+                          {ended ? (
+                            <span className="text-muted">Ended listing</span>
+                          ) : (
+                            <Link
+                              href={`/copies/${Buffer.from(copy.canonicalUri).toString("base64url")}`}
+                              className="font-medium underline-offset-4 hover:underline"
+                            >
+                              {text(listing.name) ?? "Unnamed"}
+                            </Link>
+                          )}
+                          <div className="text-muted text-xs">
+                            {[copy.type, text(record(vessel.builder).name), text(record(vessel.model).name), vessel.year_built]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="py-3 pr-4">{partner?.name ?? copy.provenance.authority}</td>

@@ -2,7 +2,9 @@ import { Alert, AlertContent, AlertDescription, AlertTitle, Card, CardContent, C
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { can, requireSession } from "@/lib/auth/session";
+import { PartnerThumbnail } from "@/components/partner-thumbnail";
 import { toCopy } from "@/lib/federation/repositories";
+import { collectionThumbnails, profileThumbnail, type Thumbnail } from "@/lib/listings/wire-thumbnails";
 import { descriptionSanitiser } from "@/lib/federation/sanitiser";
 import { userClient } from "@/lib/supabase/server";
 import { ReviewConflict } from "./review-conflict";
@@ -30,6 +32,10 @@ export default async function CopyPage({ params }: PageProps<"/copies/[id]">) {
   const price = record(listing.price);
   const location = record(listing.location);
   const descriptions = Array.isArray(copy.payload.descriptions) ? copy.payload.descriptions.map(record) : [];
+  const profile = profileThumbnail(copy.payload);
+  const gallery = collectionThumbnails(copy.payload, "gallery");
+  const layouts = collectionThumbnails(copy.payload, "layouts");
+  const unpreviewed = gallery.withoutPreview + layouts.withoutPreview;
 
   return (
     <main className="flex flex-col gap-6">
@@ -82,6 +88,30 @@ export default async function CopyPage({ params }: PageProps<"/copies/[id]">) {
             <AlertDescription>{copy.heldReasons.join(" ")}</AlertDescription>
           </AlertContent>
         </Alert>
+      )}
+
+      {(profile !== null || gallery.thumbnails.length > 0 || layouts.thumbnails.length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Media</CardTitle>
+            <CardDescription>
+              The authority&apos;s own preview thumbnails, loaded from its host.
+              {unpreviewed > 0 &&
+                ` ${unpreviewed} more ${unpreviewed === 1 ? "item has no thumbnail and is" : "items have no thumbnail and are"} not previewed.`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {profile !== null && (
+              <PartnerThumbnail
+                thumbnail={profile}
+                alt={`${text(listing.name) ?? "Listing"}, profile image`}
+                className="aspect-[3/2] w-full max-w-md rounded-lg"
+              />
+            )}
+            <ThumbnailGrid label="Gallery" thumbnails={gallery.thumbnails} />
+            <ThumbnailGrid label="Layouts" thumbnails={layouts.thumbnails} />
+          </CardContent>
+        </Card>
       )}
 
       <Card>
@@ -179,5 +209,21 @@ export default async function CopyPage({ params }: PageProps<"/copies/[id]">) {
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+function ThumbnailGrid({ label, thumbnails }: { label: string; thumbnails: Thumbnail[] }) {
+  if (thumbnails.length === 0) return null;
+  return (
+    <section>
+      <h3 className="text-muted mb-2 text-xs uppercase">{label}</h3>
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
+        {thumbnails.map((item, index) => (
+          <li key={`${item.src}-${index}`}>
+            <PartnerThumbnail thumbnail={item} alt={`${label} image ${index + 1}`} className="aspect-[3/2] w-full rounded-md" />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
