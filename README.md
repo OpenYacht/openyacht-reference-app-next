@@ -15,7 +15,10 @@ FP-7.
 > this node's own sale and charter listings, per-listing sharing, per-partner field groups, the partner feed with tombstones and an opaque
 > cursor, and listing media (renditions and SHA-256 hashes made at upload, originals behind expiring URLs); **key rotation**, routine with
 > a 48-hour overlap and emergency without one; and **rate limiting**, per partner on the signed endpoints and per client address on the
-> discovery document. Push subscriptions are not implemented, and `capabilities` says so.
+> discovery document; **push subscriptions** both ways (offering them to partners is a dashboard switch, off by default, and `capabilities`
+> follows it); partner groups, conflict review, user management with an editable permission matrix, the hourly sync scheduled by `pg_cron`,
+> and a read-only data API for the node's own websites. Still to come: full charter authoring and the full listing form, local renditions
+> of partner media, cross-currency search, change webhooks, generated API docs, translations, and a one-click deploy.
 
 ## The part you can lift: `federation/`
 
